@@ -1,11 +1,36 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SmartCart</title>
 </head>
 <body>
-    
+    <h1>Chat con Socket.io</h1>
+    <input id="mensajeInput" type="text" placeholder="Escribe un mensaje..." />
+    <button onclick="enviarMensaje()">Enviar</button>
+    <ul id="mensajes"></ul>
+
+    <!-- Incluir Socket.io desde el servidor -->
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        // Establecer conexión con el servidor Socket.io
+        const socket = io();  // Conectar al servidor
+
+        // Enviar mensaje al servidor
+        function enviarMensaje() {
+            const input = document.getElementById("mensajeInput");
+            const mensaje = input.value;
+            socket.emit("mensaje", mensaje);  // Emitir el mensaje al servidor
+            input.value = "";  // Limpiar el campo de entrada
+        }
+
+        // Escuchar mensajes desde el servidor
+        socket.on("mensaje", (data) => {
+            const li = document.createElement("li");
+            li.textContent = data;  // Mostrar el mensaje recibido
+            document.getElementById("mensajes").appendChild(li);
+        });
+    </script>
 </body>
 </html>
