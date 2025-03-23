@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SmartCart - Lista de la Compra</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #f8f9fa;
+            padding: 20px;
+        }
+        .btn-custom {
+            width: 100%;
+            height: 80px;
+            font-size: 20px;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 10px;
+        }
+        .btn-mic {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            font-size: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .lista-compra {
+            margin-top: 20px;
+        }
+        .lista-compra ul {
+            list-style-type: none;
+            padding: 0;
+        }
+        .lista-compra li {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            border: 1px solid #ddd;
+            margin-bottom: 10px;
+            border-radius: 5px;
+            background-color: #fff;
+        }
+        .lista-compra li button {
+            background-color: #dc3545;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 class="text-center mb-4">SmartCart - Lista de la Compra</h1>
+
+        <!-- Campo para añadir artículos -->
+        <div class="input-group mb-3">
+            <input type="text" id="nuevoArticulo" class="form-control" placeholder="Escribe un artículo...">
+            <button class="btn btn-primary" onclick="agregarArticulo()">Añadir</button>
+        </div>
+
+        <!-- Lista de artículos -->
+        <div class="lista-compra">
+            <ul id="listaArticulos">
+                <!-- Aquí se mostrarán los artículos -->
+            </ul>
+        </div>
+
+        <!-- Botón para volver al menú principal -->
+        <button class="btn btn-secondary btn-custom" onclick="volverAlMenu()">Volver al menú</button>
+    </div>
+
+    <!-- Botón de micrófono -->
+    <button class="btn btn-primary btn-mic" onclick="activarMicrofono()">🎤</button>
+
+    <script>
+        // Función para añadir un artículo a la lista
+        function agregarArticulo() {
+            const input = document.getElementById("nuevoArticulo");
+            const articulo = input.value.trim();
+
+            if (articulo !== "") {
+                // Añadir el artículo a la lista
+                const lista = document.getElementById("listaArticulos");
+                const li = document.createElement("li");
+                li.innerHTML = `
+                    <span>${articulo}</span>
+                    <button onclick="borrarArticulo(this)">Borrar</button>
+                `;
+                lista.appendChild(li);
+
+                // Ordenar la lista alfabéticamente
+                ordenarLista();
+
+                // Limpiar el campo de entrada
+                input.value = "";
+            } else {
+                alert("Por favor, escribe un artículo.");
+            }
+        }
+
+        // Función para borrar un artículo de la lista
+        function borrarArticulo(boton) {
+            const li = boton.parentElement;
+            li.remove();
+        }
+
+        // Función para ordenar la lista alfabéticamente
+        function ordenarLista() {
+            const lista = document.getElementById("listaArticulos");
+            const items = Array.from(lista.getElementsByTagName("li"));
+
+            items.sort((a, b) => {
+                const textoA = a.querySelector("span").textContent.toLowerCase();
+                const textoB = b.querySelector("span").textContent.toLowerCase();
+                return textoA.localeCompare(textoB);
+            });
+
+            // Limpiar la lista y volver a añadir los elementos ordenados
+            lista.innerHTML = "";
+            items.forEach(item => lista.appendChild(item));
+        }
+
+        // Función para volver al menú principal
+        function volverAlMenu() {
+            window.location.href = "/";  // Redirigir a la pantalla principal
+        }
+
+        // Función para activar el micrófono (simulada)
+        function activarMicrofono() {
+            alert("Micrófono activado...");
+            // Aquí podrías integrar un servicio de reconocimiento de voz
+        }
+    </script>
+    <script src="/socket.io/socket.io.js"></script>
+</body>
+</html>

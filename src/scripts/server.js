@@ -7,11 +7,12 @@ const app = express();
 const httpServer = createServer(app);
 const io = new Server(httpServer);
 
-// route defining for loading index.html at localhost:3000
+// Ruta para servir archivos estáticos desde src/pages
 const PAGES_ROUTE = path.join(__dirname, "../..", "src", "pages");
 
-app.get("/", (req, res) => { // GET: runs the index page
-  res.sendFile(path.join(PAGES_ROUTE, 'index.html'));
+// Ruta raíz para servir mobile.html
+app.get("/", (req, res) => {
+  res.sendFile(path.join(PAGES_ROUTE, "mobile.html"));
 });
 
 // Web socket connections
