@@ -9,19 +9,19 @@ const io = new Server(httpServer);
 
 // Ruta para servir archivos estáticos desde src/pages
 const PAGES_ROUTE = path.join(__dirname, "../..", "src", "pages");
+app.use(express.static(PAGES_ROUTE));
 
 // Ruta raíz para servir mobile.html
 app.get("/", (req, res) => {
-  res.sendFile(path.join(PAGES_ROUTE, "mobile.html"));
+  res.sendFile(path.join(PAGES_ROUTE, "index.html"));
 });
 
 // Web socket connections
 io.on("connection", (socket) => {
   console.log("🔌 Cliente conectado:", socket.id);
 
-  socket.on("mensaje", (data) => {
-    console.log("📩 Mensaje recibido:", data);
-    io.emit("mensaje", data);
+  socket.on("mensaje", (data) => { // to be updated
+    return;
   });
 
   socket.on("disconnect", () => {

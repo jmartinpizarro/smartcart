@@ -3,34 +3,77 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SmartCart</title>
+    <title>SmartCart - Móvil</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #f8f9fa;
+            padding: 20px;
+        }
+        .btn-custom {
+            width: 100%;
+            height: 80px;
+            font-size: 20px;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 10px;
+        }
+        .btn-mic {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            font-size: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+    </style>
 </head>
 <body>
-    <h1>Chat con Socket.io</h1>
-    <input id="mensajeInput" type="text" placeholder="Escribe un mensaje..." />
-    <button onclick="enviarMensaje()">Enviar</button>
-    <ul id="mensajes"></ul>
+    <div class="container">
+        <h1 class="text-center mb-4">¡Bienvenido a SmartCart!</h1>
+
+        <!-- Botones grandes en vertical -->
+        <div class="d-grid gap-3">
+            <button class="btn btn-primary btn-custom" onclick="escanearArticulo()">Escanear artículo</button>
+            <button class="btn btn-primary btn-custom" onclick="verListaCompra()">Lista de la compra</button>
+            <button class="btn btn-primary btn-custom" onclick="abrirAjustes()">Ajustes</button>
+        </div>
+    </div>
+
+    <!-- Botón de micrófono -->
+    <button class="btn btn-primary btn-mic" onclick="activarMicrofono()">🎤</button>
 
     <!-- Incluir Socket.io desde el servidor -->
     <script src="/socket.io/socket.io.js"></script>
     <script>
-        // Establecer conexión con el servidor Socket.io
         const socket = io();  // Conectar al servidor
 
-        // Enviar mensaje al servidor
-        function enviarMensaje() {
-            const input = document.getElementById("mensajeInput");
-            const mensaje = input.value;
-            socket.emit("mensaje", mensaje);  // Emitir el mensaje al servidor
-            input.value = "";  // Limpiar el campo de entrada
+        // Funciones para las acciones
+        function escanearArticulo() {
+            alert("Escaneando artículo...");
+            socket.emit("escanear", { articulo: "Artículo escaneado" });
         }
 
-        // Escuchar mensajes desde el servidor
-        socket.on("mensaje", (data) => {
-            const li = document.createElement("li");
-            li.textContent = data;  // Mostrar el mensaje recibido
-            document.getElementById("mensajes").appendChild(li);
-        });
+        function verListaCompra() {
+            alert("Mostrando lista de la compra...");
+            window.location.href = "./listacompra.html";
+        }
+
+        function abrirAjustes() {
+            alert("Abriendo ajustes...");
+        }
+
+        function activarMicrofono() {
+            alert("Micrófono activado...");
+            // Aquí podrías integrar un servicio de reconocimiento de voz
+        }
     </script>
+    <script src="/socket.io/socket.io.js"></script>
 </body>
 </html>
