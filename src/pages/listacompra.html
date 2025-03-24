@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -10,6 +11,7 @@
             background-color: #f8f9fa;
             padding: 20px;
         }
+
         .btn-custom {
             width: 100%;
             height: 80px;
@@ -20,6 +22,7 @@
             justify-content: center;
             border-radius: 10px;
         }
+
         .btn-mic {
             position: fixed;
             bottom: 20px;
@@ -32,13 +35,16 @@
             align-items: center;
             justify-content: center;
         }
+
         .lista-compra {
             margin-top: 20px;
         }
+
         .lista-compra ul {
             list-style-type: none;
             padding: 0;
         }
+
         .lista-compra li {
             display: flex;
             justify-content: space-between;
@@ -49,6 +55,7 @@
             border-radius: 5px;
             background-color: #fff;
         }
+
         .lista-compra li button {
             background-color: #dc3545;
             color: white;
@@ -59,6 +66,7 @@
         }
     </style>
 </head>
+
 <body>
     <div class="container">
         <h1 class="text-center mb-4">SmartCart - Lista de la Compra</h1>
@@ -81,9 +89,31 @@
     </div>
 
     <!-- Botón de micrófono -->
-    <button class="btn btn-primary btn-mic" onclick="activarMicrofono()">🎤</button>
+    <button class="btn btn-primary btn-mic" onclick="activarMicrofonoCarro()">🎤</button>
 
     <script>
+        // Función para cargar la lista desde localStorage
+        function cargarLista() {
+            const lista = document.getElementById("listaArticulos");
+            const articulosGuardados = JSON.parse(localStorage.getItem("listaCompra")) || [];
+
+            articulosGuardados.forEach(articulo => {
+                const li = document.createElement("li");
+                li.innerHTML = `
+                    <span>${articulo}</span>
+                    <button onclick="borrarArticulo(this)">Borrar</button>
+                `;
+                lista.appendChild(li);
+            });
+        }
+
+        // Función para guardar la lista en localStorage
+        function guardarLista() {
+            const lista = document.getElementById("listaArticulos");
+            const articulos = Array.from(lista.getElementsByTagName("li")).map(li => li.querySelector("span").textContent);
+            localStorage.setItem("listaCompra", JSON.stringify(articulos));
+        }
+
         // Función para añadir un artículo a la lista
         function agregarArticulo() {
             const input = document.getElementById("nuevoArticulo");
@@ -102,6 +132,9 @@
                 // Ordenar la lista alfabéticamente
                 ordenarLista();
 
+                // Guardar la lista en localStorage
+                guardarLista();
+
                 // Limpiar el campo de entrada
                 input.value = "";
             } else {
@@ -113,6 +146,9 @@
         function borrarArticulo(boton) {
             const li = boton.parentElement;
             li.remove();
+
+            // Guardar la lista en localStorage después de borrar
+            guardarLista();
         }
 
         // Función para ordenar la lista alfabéticamente
@@ -129,6 +165,9 @@
             // Limpiar la lista y volver a añadir los elementos ordenados
             lista.innerHTML = "";
             items.forEach(item => lista.appendChild(item));
+
+            // Guardar la lista en localStorage después de ordenar
+            guardarLista();
         }
 
         // Función para volver al menú principal
@@ -136,12 +175,128 @@
             window.location.href = "/";  // Redirigir a la pantalla principal
         }
 
-        // Función para activar el micrófono (simulada)
-        function activarMicrofono() {
-            alert("Micrófono activado...");
-            // Aquí podrías integrar un servicio de reconocimiento de voz
+        function agregarArticulo() {
+            const input = document.getElementById("nuevoArticulo");
+            const articulo = input.value.trim();
+
+            if (articulo !== "") {
+                // Añadir el artículo a la lista
+                const lista = document.getElementById("listaArticulos");
+                const li = document.createElement("li");
+                li.innerHTML = `
+                    <span>${articulo}</span>
+                    <button onclick="borrarArticulo(this)">Borrar</button>
+                `;
+                lista.appendChild(li);
+
+                // Ordenar la lista alfabéticamente
+                ordenarLista();
+
+                // Guardar la lista en localStorage
+                guardarLista();
+
+                // Limpiar el campo de entrada
+                input.value = "";
+            } else {
+                alert("Por favor, escribe un artículo.");
+            }
         }
+
+        function activarMicrofonoCarro() {
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            if (!SpeechRecognition) {
+                alert("Tu navegador no soporta Speech Recognition");
+                return;
+            }
+
+            const recognition = new SpeechRecognition();
+            recognition.lang = 'es-ES';
+            recognition.interimResults = false;
+            recognition.maxAlternatives = 1;
+
+            alert("Di un comando como: añadir ___, borrar ___, volver");
+
+            recognition.start();
+
+            recognition.onresult = function (event) {
+                const transcript = event.results[0][0].transcript.toLowerCase().trim();
+                console.log("Reconocido:", transcript);
+
+                // Procesamos la frase completa
+                if (transcript.startsWith("añadir")) {
+                    const articulo = transcript.replace("añadir", "").trim();
+                    if (articulo) {
+                        añadirArticuloReconocido(articulo);
+                    } else {
+                        alert("No entendí qué artículo añadir.");
+                    }
+
+                } else if (transcript.startsWith("borrar")) {
+                    const articulo = transcript.replace("borrar", "").trim();
+                    if (articulo) {
+                        borrarArticuloReconocido(articulo);
+                    } else {
+                        alert("No entendí qué artículo borrar.");
+                    }
+
+                } else if (transcript.includes("volver")) {
+                    volverAlMenu();
+
+                } else {
+                    alert("Comando no reconocido: " + transcript);
+                }
+            };
+
+            recognition.onerror = function (event) {
+                alert("Error en reconocimiento: " + event.error);
+            };
+        }
+
+        // Añadir artículo desde comando por voz
+        function añadirArticuloReconocido(nombreArticulo) {
+            const articuloCap = nombreArticulo.charAt(0).toUpperCase() + nombreArticulo.slice(1).toLowerCase();
+
+            const lista = document.getElementById("listaArticulos");
+            const li = document.createElement("li");
+            li.innerHTML = `
+        <span>${articuloCap}</span>
+        <button onclick="borrarArticulo(this)">Borrar</button>
+    `;
+            lista.appendChild(li);
+
+            ordenarLista();
+            guardarLista();
+
+            //alert(`Artículo añadido: ${articuloCap}`);
+        }
+
+        // Borrar artículo desde comando por voz
+        function borrarArticuloReconocido(nombreArticulo) {
+            const articuloABorrar = nombreArticulo.toLowerCase();
+            const lista = document.getElementById("listaArticulos");
+            const items = Array.from(lista.getElementsByTagName("li"));
+
+            let encontrado = false;
+
+            items.forEach(li => {
+                const texto = li.querySelector("span").textContent.toLowerCase();
+                if (texto === articuloABorrar) {
+                    li.remove();
+                    encontrado = true;
+                }
+            });
+
+            if (encontrado) {
+                //alert(`Artículo borrado: ${nombreArticulo}`);
+                guardarLista();
+            } else {
+                alert(`No se encontró el artículo: ${nombreArticulo}`);
+            }
+        }
+        // Cargar la lista al iniciar la página
+        document.addEventListener("DOMContentLoaded", cargarLista);
     </script>
     <script src="/socket.io/socket.io.js"></script>
 </body>
+
 </html>
