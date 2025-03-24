@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Escanear Artículo</title>
+    <style>
+        video, canvas {
+            width: 100%;
+            max-width: 400px;
+            margin: 10px auto;
+            display: block;
+        }
+        #captureButton {
+            display: block;
+            margin: 20px auto;
+            padding: 10px 20px;
+            font-size: 16px;
+        }
+        #volverAlMenu {
+            display: block;
+            margin: 20px auto;
+            padding: 10px 20px;
+            font-size: 16px;
+        }
+    </style>
+</head>
+<body>
+    <video id="video" autoplay></video>
+    <button id="captureButton">Capturar Imagen</button>
+    <button id = "volverAlMenu" onclick="window.location.href = './index.html';">Volver al menú</button>
+    <canvas id="canvas" style="display: none;"></canvas>
+
+    <script>
+        const video = document.getElementById('video');
+        const canvas = document.getElementById('canvas');
+        const captureButton = document.getElementById('captureButton');
+
+        // Función para iniciar la cámara
+        async function iniciarCamara() {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+                video.srcObject = stream;
+            } catch (error) {
+                console.error('Error al acceder a la cámara:', error);
+                alert('No se pudo acceder a la cámara. Por favor, verifica que tienes permisos y que ningún otro aplicativo la esté utilizando.');
+            }
+        }
+
+        // Función para capturar la imagen del video
+        function capturarImagen() {
+            const context = canvas.getContext('2d');
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            context.drawImage(video, 0, 0, canvas.width, canvas.height);
+            const imagenDataURL = canvas.toDataURL('image/png');
+            // Aquí puedes enviar la imagen al servidor o procesarla según tus necesidades
+            console.log('Imagen capturada:', imagenDataURL);
+        }
+
+        // Event listener para el botón de captura
+        captureButton.addEventListener('click', capturarImagen);
+
+        // Iniciar la cámara al cargar la página
+        window.addEventListener('load', iniciarCamara);
+    </script>
+</body>
+</html>

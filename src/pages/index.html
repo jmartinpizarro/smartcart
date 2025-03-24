@@ -56,8 +56,7 @@
 
         // Funciones para las acciones
         function escanearArticulo() {
-            alert("Escaneando artículo...");
-            socket.emit("escanear", { articulo: "Artículo escaneado" });
+            window.location.href = './camara.html';
         }
 
         function verListaCompra() {
