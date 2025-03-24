@@ -16,6 +16,11 @@ app.get("/", (req, res) => {
   res.sendFile(path.join(PAGES_ROUTE, "index.html"));
 });
 
+// Ruta raíz para servir carrito.html
+app.get("/carrito", (req, res) => {
+  res.sendFile(path.join(PAGES_ROUTE, "carrito.html"));
+});
+
 // Web socket connections
 io.on("connection", (socket) => {
   console.log("🔌 Cliente conectado:", socket.id);
@@ -32,4 +37,5 @@ io.on("connection", (socket) => {
 const PORT = 3000;
 httpServer.listen(PORT, () => {
   console.log(`✅ Servidor corriendo en http://localhost:${PORT}`);
+  console.log(`🛒 Carrito: http://localhost:${PORT}/carrito.html`);
 });
