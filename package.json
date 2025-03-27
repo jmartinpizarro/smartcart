@@ -20,5 +20,9 @@
   "dependencies": {
     "express": "^4.21.2",
     "socket.io": "^4.8.1"
+  },
+  "devDependencies": {
+    "@vercel/node": "^2.x",
+    "nodemon": "^2.x"
   }
 }

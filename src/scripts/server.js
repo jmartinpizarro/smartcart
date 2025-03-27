@@ -7,16 +7,15 @@ const app = express();
 const httpServer = createServer(app);
 const io = new Server(httpServer);
 
-// Ruta para servir archivos estáticos desde src/pages
-const PAGES_ROUTE = path.join(__dirname, "../..", "src", "pages");
+// Adjust static file serving for Vercel
+const PAGES_ROUTE = path.join(__dirname, "..", "pages");
 app.use(express.static(PAGES_ROUTE));
 
-// Ruta raíz para servir mobile.html
+// Routes
 app.get("/", (req, res) => {
   res.sendFile(path.join(PAGES_ROUTE, "index.html"));
 });
 
-// Ruta raíz para servir carrito.html
 app.get("/carrito", (req, res) => {
   res.sendFile(path.join(PAGES_ROUTE, "carrito.html"));
 });
@@ -24,18 +23,22 @@ app.get("/carrito", (req, res) => {
 // Web socket connections
 io.on("connection", (socket) => {
   console.log("🔌 Cliente conectado:", socket.id);
-
-  socket.on("mensaje", (data) => { // to be updated
+  socket.on("mensaje", (data) => {
     return;
   });
-
   socket.on("disconnect", () => {
     console.log("❌ Cliente desconectado:", socket.id);
   });
 });
 
-const PORT = 3000;
-httpServer.listen(PORT, () => {
-  console.log(`✅ Servidor corriendo en http://localhost:${PORT}`);
-  console.log(`🛒 Carrito: http://localhost:${PORT}/carrito.html`);
-});
+// Export the app for Vercel
+module.exports = app;
+
+// Only listen if not in a serverless environment
+if (process.env.NODE_ENV !== 'production') {
+  const PORT = process.env.PORT || 3000;
+  httpServer.listen(PORT, () => {
+    console.log(`✅ Servidor corriendo en http://localhost:${PORT}`);
+    console.log(`🛒 Carrito: http://localhost:${PORT}/carrito.html`);
+  });
+}
