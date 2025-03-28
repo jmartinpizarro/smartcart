@@ -138,3 +138,5 @@ dist
 
 GroceryStoreDataset/
 .venv
+
+cnn_model/.ipynb_checkpoints/
