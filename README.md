@@ -25,7 +25,7 @@ Then go to `localhost:3000` to start being served with the statics pages of the 
 
 ## The Neural Network. 
 
-A CNN network for the sake of learning ML and applying it to a real-case project. The [dataset](https://github.com/marcusklasson/GroceryStoreDataset) will be used for it.
+A CNN network for the sake of learning ML and applying it to a real-case project. The [dataset](https://github.com/PhilJd/freiburg_groceries_dataset) will be used for it.
 
 It will be necessary to reformat all the images into a 224x224 images for a ResNet CNN neural network. A paper will be done in order to discuss more about this.
 
