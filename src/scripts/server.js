@@ -42,3 +42,51 @@ if (process.env.NODE_ENV !== 'production') {
     console.log(`🛒 Carrito: http://localhost:${PORT}/carrito.html`);
   });
 }
+
+function escanearArticulo() {
+  window.location.href = './camara.html';
+}
+
+function verListaCompra() {
+  //alert("Mostrando lista de la compra...");
+  window.location.href = "./listacompra.html";
+}
+
+function abrirAjustes() {
+  alert("Abriendo ajustes...");
+}
+
+function activarMicrofono() {
+  // Comprobar compatibilidad
+  //alert("Tratando de activar micrófono...");
+  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SpeechRecognition) {
+      alert("Tu navegador no soporta Speech Recognition");
+      return;
+  }
+
+  const recognition = new SpeechRecognition();
+  recognition.lang = 'es-ES';
+  recognition.interimResults = false;
+  recognition.maxAlternatives = 1;
+
+  recognition.start();
+  alert("Di un comando");
+
+  recognition.onresult = function(event) {
+      const transcript = event.results[0][0].transcript.toLowerCase();
+      console.log("Reconocido:", transcript);
+
+      if (transcript.includes("escanear")) {
+          escanearArticulo();
+      } else if (transcript.includes("lista")) {
+          verListaCompra();
+      } else if (transcript.includes("ajustes")) {
+          abrirAjustes();
+      } else if (transcript.includes("micrófono")) {
+          alert("Micrófono ya está activado");
+      } else {
+          alert("Comando no reconocido: " + transcript);
+      }
+  }
+}

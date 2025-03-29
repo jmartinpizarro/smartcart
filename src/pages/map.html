@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Smart Shopping Cart Map</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        
+        #supermarket-map {
+            width: 600px;
+            height: 400px;
+            border: 2px solid #333;
+            position: relative;
+            background-color: #f0f8ff;
+            margin: 20px;
+        }
+        
+        #user-dot {
+            width: 15px;
+            height: 15px;
+            background-color: red;
+            border-radius: 50%;
+            position: absolute;
+            transition: all 0.3s ease;
+        }
+        
+        .aisle {
+            position: absolute;
+            background-color: #fff;
+            border: 1px solid #ccc;
+        }
+        
+        #controls {
+            margin: 20px;
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        
+        button {
+            padding: 10px 15px;
+            margin: 0 5px;
+            cursor: pointer;
+            min-width: 120px;
+        }
+        
+        #back-button {
+            background-color: #f44336;
+            color: white;
+            border: none;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Smart Shopping Cart Map</h1>
+    <div id="supermarket-map">
+        <!-- Aisles will be added here -->
+        <div id="user-dot"></div>
+    </div>
+    <div id="controls">
+        <button id="step-left">Step Left</button>
+        <button id="step-right">Step Right</button>
+        <button id="step-up">Step Up</button>
+        <button id="step-down">Step Down</button>
+        <button id="back-button">Back to Cart</button>
+    </div>
+    <p>Current position: <span id="position-display">(0, 0)</span></p>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Map dimensions
+            const mapWidth = 600;
+            const mapHeight = 400;
+            
+            // Load or initialize user position
+            let userPosition = loadPosition() || { x: 10, y: 390 };
+            
+            // Step size in pixels
+            const stepSize = 10;
+            
+            // Get DOM elements
+            const userDot = document.getElementById('user-dot');
+            const positionDisplay = document.getElementById('position-display');
+            const supermarketMap = document.getElementById('supermarket-map');
+            const backButton = document.getElementById('back-button');
+            
+            // Array to store shelf boundaries for collision detection
+            const obstacles = [];
+            
+            // Create supermarket aisles (that will act as obstacles)
+            function createAisles() {
+                // Horizontal aisles
+                for (let i = 0; i < 3; i++) {
+                    const aisle = document.createElement('div');
+                    aisle.className = 'aisle';
+                    aisle.style.width = '480px';
+                    aisle.style.height = '30px';
+                    const leftPos = 60;
+                    const topPos = 100 + i * 100;
+                    aisle.style.left = leftPos + 'px';
+                    aisle.style.top = topPos + 'px';
+                    supermarketMap.appendChild(aisle);
+                    
+                    // Store obstacle boundaries (x1, y1, x2, y2)
+                    obstacles.push({
+                        x1: leftPos,
+                        y1: topPos,
+                        x2: leftPos + 480,
+                        y2: topPos + 30
+                    });
+                }
+            }
+            
+            // Load position from localStorage
+            function loadPosition() {
+                const savedPos = localStorage.getItem('cartPosition');
+                return savedPos ? JSON.parse(savedPos) : null;
+            }
+            
+            // Save position to localStorage
+            function savePosition() {
+                localStorage.setItem('cartPosition', JSON.stringify(userPosition));
+            }
+            
+            // Check if a position would collide with any obstacle
+            function isColliding(x, y) {
+                const dotRadius = 7.5; // Half of the dot's size
+                
+                for (const obstacle of obstacles) {
+                    if (x + dotRadius > obstacle.x1 && 
+                        x - dotRadius < obstacle.x2 && 
+                        y + dotRadius > obstacle.y1 && 
+                        y - dotRadius < obstacle.y2) {
+                        return true;
+                    }
+                }
+                return false;
+            }
+            
+            // Update user position on the map
+            function updateUserPosition() {
+                userDot.style.left = (userPosition.x - 7.5) + 'px';
+                userDot.style.top = (userPosition.y - 7.5) + 'px';
+                positionDisplay.textContent = `(${Math.round(userPosition.x)}, ${Math.round(userPosition.y)})`;
+                savePosition(); // Save position whenever it changes
+            }
+            
+            // Move the user dot with obstacle detection
+            function moveUser(dx, dy) {
+                // Calculate new position
+                const newX = userPosition.x + dx;
+                const newY = userPosition.y + dy;
+                
+                // Check map boundaries first
+                if (newX < 10 || newX > mapWidth - 10 || 
+                    newY < 10 || newY > mapHeight - 10) {
+                    return; // Don't move outside map
+                }
+                
+                // Check for collisions with obstacles
+                if (!isColliding(newX, newY)) {
+                    userPosition.x = newX;
+                    userPosition.y = newY;
+                    updateUserPosition();
+                }
+            }
+            
+            // Initialize the map
+            function init() {
+                createAisles();
+                updateUserPosition();
+                
+                // Add event listeners for buttons
+                document.getElementById('step-left').addEventListener('click', () => moveUser(-stepSize, 0));
+                document.getElementById('step-right').addEventListener('click', () => moveUser(stepSize, 0));
+                document.getElementById('step-up').addEventListener('click', () => moveUser(0, -stepSize));
+                document.getElementById('step-down').addEventListener('click', () => moveUser(0, stepSize));
+                
+                // Back to cart button
+                backButton.addEventListener('click', () => {
+                    window.location.href = 'carrito.html';
+                });
+                
+                // Add keyboard controls for easier testing
+                document.addEventListener('keydown', (e) => {
+                    switch(e.key) {
+                        case 'ArrowLeft': moveUser(-stepSize, 0); break;
+                        case 'ArrowRight': moveUser(stepSize, 0); break;
+                        case 'ArrowUp': moveUser(0, -stepSize); break;
+                        case 'ArrowDown': moveUser(0, stepSize); break;
+                    }
+                });
+                
+                // Simulate position updates even when not on this page
+                // This would be replaced with actual position updates from your sensors
+                if (typeof io !== 'undefined') {
+                    const socket = io();
+                    socket.on('positionUpdate', (newPos) => {
+                        userPosition = newPos;
+                        updateUserPosition();
+                    });
+                }
+            }
+            
+            init();
+        });
+    </script>
+    <script src="/socket.io/socket.io.js"></script>
+</body>
+</html>

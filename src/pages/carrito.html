@@ -3,32 +3,22 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SmartCart - Carrito de la compra</title>
+    <title>SmartCart - Móvil</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
-        body {           
-            max-width: 600px;
-            margin: auto;
+        body {
+            background-color: #f8f9fa;
             padding: 20px;
         }
-        .producto {
+        .btn-custom {
+            width: 100%;
+            height: 80px;
+            font-size: 20px;
+            margin-bottom: 15px;
             display: flex;
-            justify-content: space-between;
             align-items: center;
-            padding: 10px;
-            border: 1px solid #ccc;
-            margin-bottom: 10px;
-            border-radius: 5px;
-        }
-        .btn {
-            padding: 5px 10px;
-            margin: 0 5px;
-            cursor: pointer;
-        }
-        .btn-remove {
-            background-color: red;
-            color: white;
-            border: none;
+            justify-content: center;
+            border-radius: 10px;
         }
         .btn-mic {
             position: fixed;
@@ -46,115 +36,37 @@
 </head>
 <body>
     <div class="container">
-        <h1>Carrito de la Compra</h1>
-        <div id="carrito"></div>
-        <h3>Total: <span id="total">0</span> €</h3>
+        <h1 class="text-center mb-4">¡Bienvenido a SmartCart!</h1>
+
+        <!-- Botones grandes en vertical -->
+        <div class="d-grid gap-3">
+            <button class="btn btn-primary btn-custom" onclick="activarMapa()">Mapa</button>
+            <button class="btn btn-primary btn-custom" onclick="verListaCarrito()">Lista de la compra</button>
+            <button class="btn btn-primary btn-custom" onclick="finalizarCompra()">Finalizar compra</button>
+        </div>
     </div>
 
     <!-- Botón de micrófono -->
-    <button class="btn btn-primary btn-mic" onclick="activarMicrofonoCarro()">🎤</button>
+    <button class="btn btn-primary btn-mic" onclick="activarMicrofono()">🎤</button>
 
     <!-- Incluir Socket.io desde el servidor -->
     <script src="/socket.io/socket.io.js"></script>
     <script>
-        // Conectar al servidor
-        const socket = io();
+        const socket = io();  // Conectar al servidor
 
-        // Variable carrito como un array de objetos
-        let carrito = [
-            { id: 1, nombre: "Leche", precio: 20, cantidad: 1 },
-            { id: 2, nombre: "Pan", precio: 15, cantidad: 2 }
-        ];
+        // Funciones para las acciones
 
-        // Función para renderizar el carrito
-        function renderCart() {
-            const cartContainer = document.getElementById("carrito");
-            cartContainer.innerHTML = "";
-            let total = 0;
-            // Se recorre cada producto en el carrito
-            carrito.forEach(item => {
-                total += item.precio * item.cantidad;
-                // Se crea un elemento div con la información de cada producto
-                const producto = document.createElement("div");
-                producto.classList.add("producto");
-                // Se muestra la información del producto y crea tres botones 
-                // para cambiar la cantidad de cada producto
-                producto.innerHTML = `
-                    <span>${item.nombre} - $${item.precio} x ${item.cantidad}</span>
-                    <div>
-                        <button class="btn" onclick="updateQuantity(${item.id}, -1)">-</button>
-                        <button class="btn" onclick="updateQuantity(${item.id}, 1)">+</button>
-                        <button class="btn btn-remove" onclick="removeItem(${item.id})">X</button>
-                    </div>
-                `;
-                cartContainer.appendChild(producto);
-            });
-            document.getElementById("total").innerText = total;
-        }
-
-        // Función para cambiar la cantidad de cada producto
-        function updateQuantity(id, cambio) {
-            carrito = carrito.map(item => 
-                item.id === id ? { ...item, cantidad:  item.cantidad + cambio } : item
-            ).filter(item => item.cantidad > 0);    // Si la cantidad se vuelve 0 se elimina el producto
-            renderCart();
-        }
-
-        // Función para eliminar un producto
-        function removeItem(id) {
-            carrito = carrito.filter(item => item.id !== id);
-            renderCart();
-        }
-
-        /*
-        function activarMicrofonoCarro() {
-            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-            if (!SpeechRecognition) {
-                alert("Tu navegador no soporta Speech Recognition");
-                return;
-            }
-
-            const recognition = new SpeechRecognition();
-            recognition.lang = 'es-ES';
-            recognition.interimResults = false;
-            recognition.maxAlternatives = 1;
-
-            recognition.start();
-            alert("Di un comando");
-
-            recognition.onresult = function(event) {
-                const transcript = event.results[0][0].transcript.toLowerCase();
-                console.log("Reconocido:", transcript);
-
-                // Expresión regular para detectar eliminar cualquier producto
-                const regexEliminar = /eliminar (\w+(?: \w+)*)/;
-
-                // Intentamos hacer coincidir la expresion regular 
-                // con el comando de voz
-                const match = transcript.match(regexEliminar);
-
-                if (match) {
-                    const productName = match[1].toLowerCase();
-                    console.log('Comando eliminar producto: ${productName}');
-
-                    let productFound = false;
-                    carrito.forEach(item => {
-                        if (item.name.toLowerCase === productName){
-                            productFound = true;
-                            removeItem(item.id);
-                        }
-                    });
-                }
-                else {
-                    alert("Comando no reconocido o formato incorrecto");
-                }
-            };
             recognition.onerror = function(event) {
                 alert("Error en reconocimiento: " + event.error);
-            };          
-        }*/
+            };
 
-        renderCart();
+        function activarMapa() {
+            window.location.href = './map.html'; // Redirigir a la página del mapa
+        }
+
+        function verListaCarrito() {
+            window.location.href = './listacarrito.html'; // Redirigir a la página del mapa
+        }
     </script>
     <script src="/socket.io/socket.io.js"></script>
 </body>
