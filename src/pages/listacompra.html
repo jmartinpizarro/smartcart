@@ -1,6 +1,5 @@
 <!DOCTYPE html>
 <html lang="es">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -11,7 +10,6 @@
             background-color: #f8f9fa;
             padding: 20px;
         }
-
         .btn-custom {
             width: 100%;
             height: 80px;
@@ -22,7 +20,6 @@
             justify-content: center;
             border-radius: 10px;
         }
-
         .btn-mic {
             position: fixed;
             bottom: 20px;
@@ -35,16 +32,13 @@
             align-items: center;
             justify-content: center;
         }
-
         .lista-compra {
             margin-top: 20px;
         }
-
         .lista-compra ul {
             list-style-type: none;
             padding: 0;
         }
-
         .lista-compra li {
             display: flex;
             justify-content: space-between;
@@ -55,7 +49,6 @@
             border-radius: 5px;
             background-color: #fff;
         }
-
         .lista-compra li button {
             background-color: #dc3545;
             color: white;
@@ -64,12 +57,26 @@
             border-radius: 5px;
             cursor: pointer;
         }
+        .notification {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0,0,0,0.7);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 5px;
+            z-index: 1000;
+            display: none;
+        }
     </style>
 </head>
-
 <body>
     <div class="container">
         <h1 class="text-center mb-4">SmartCart - Lista de la Compra</h1>
+
+        <!-- Notificación -->
+        <div class="notification" id="notification"></div>
 
         <!-- Campo para añadir artículos -->
         <div class="input-group mb-3">
@@ -91,12 +98,29 @@
     <!-- Botón de micrófono -->
     <button class="btn btn-primary btn-mic" onclick="activarMicrofonoCarro()">🎤</button>
 
+    <script src="/socket.io/socket.io.js"></script>
     <script>
+        const socket = io();
+        const notification = document.getElementById('notification');
+        let esCarrito = window.location.pathname.includes('carrito');
+
+        // Mostrar notificación
+        function showNotification(message) {
+            notification.textContent = message;
+            notification.style.display = 'block';
+            setTimeout(() => {
+                notification.style.display = 'none';
+            }, 3000);
+        }
+
         // Función para cargar la lista desde localStorage
         function cargarLista() {
             const lista = document.getElementById("listaArticulos");
             const articulosGuardados = JSON.parse(localStorage.getItem("listaCompra")) || [];
-
+            
+            // Limpiar lista antes de cargar
+            lista.innerHTML = "";
+            
             articulosGuardados.forEach(articulo => {
                 const li = document.createElement("li");
                 li.innerHTML = `
@@ -107,12 +131,35 @@
             });
         }
 
-        // Función para guardar la lista en localStorage
+        // Función para guardar la lista y sincronizar
         function guardarLista() {
-            const lista = document.getElementById("listaArticulos");
-            const articulos = Array.from(lista.getElementsByTagName("li")).map(li => li.querySelector("span").textContent);
-            localStorage.setItem("listaCompra", JSON.stringify(articulos));
+    const lista = document.getElementById("listaArticulos");
+    const articulos = Array.from(lista.getElementsByTagName("li")).map(li => li.querySelector("span").textContent);
+    const listaAnterior = JSON.parse(localStorage.getItem('listaCompra')) || [];
+    
+    // Solo enviar si hay cambios reales
+    if (JSON.stringify(articulos) !== JSON.stringify(listaAnterior)) {
+        // Guardar en localStorage
+        localStorage.setItem('listaCompra', JSON.stringify(articulos));
+        
+        // Enviar actualización a través de WebSocket
+        if (esCarrito) {
+            socket.emit("carrito:mensaje", {
+                tipo: "lista-compra",
+                items: articulos,
+                mensaje: "Lista actualizada desde carrito"
+            });
+        } else {
+            socket.emit("cliente:mensaje", {
+                tipo: "lista-compra",
+                items: articulos,
+                mensaje: "Lista actualizada desde móvil"
+            });
         }
+        
+        showNotification("Lista actualizada");
+    }
+}
 
         // Función para añadir un artículo a la lista
         function agregarArticulo() {
@@ -132,13 +179,13 @@
                 // Ordenar la lista alfabéticamente
                 ordenarLista();
 
-                // Guardar la lista en localStorage
+                // Guardar y sincronizar la lista
                 guardarLista();
 
                 // Limpiar el campo de entrada
                 input.value = "";
             } else {
-                alert("Por favor, escribe un artículo.");
+                showNotification("Por favor, escribe un artículo.");
             }
         }
 
@@ -147,7 +194,7 @@
             const li = boton.parentElement;
             li.remove();
 
-            // Guardar la lista en localStorage después de borrar
+            // Guardar y sincronizar la lista después de borrar
             guardarLista();
         }
 
@@ -165,47 +212,22 @@
             // Limpiar la lista y volver a añadir los elementos ordenados
             lista.innerHTML = "";
             items.forEach(item => lista.appendChild(item));
-
-            // Guardar la lista en localStorage después de ordenar
-            guardarLista();
         }
 
         // Función para volver al menú principal
         function volverAlMenu() {
-            window.location.href = "/";  // Redirigir a la pantalla principal
-        }
-
-        function agregarArticulo() {
-            const input = document.getElementById("nuevoArticulo");
-            const articulo = input.value.trim();
-
-            if (articulo !== "") {
-                // Añadir el artículo a la lista
-                const lista = document.getElementById("listaArticulos");
-                const li = document.createElement("li");
-                li.innerHTML = `
-                    <span>${articulo}</span>
-                    <button onclick="borrarArticulo(this)">Borrar</button>
-                `;
-                lista.appendChild(li);
-
-                // Ordenar la lista alfabéticamente
-                ordenarLista();
-
-                // Guardar la lista en localStorage
-                guardarLista();
-
-                // Limpiar el campo de entrada
-                input.value = "";
+            if (esCarrito) {
+                window.location.href = "/carrito";
             } else {
-                alert("Por favor, escribe un artículo.");
+                window.location.href = "/";
             }
         }
 
+        // Control por voz
         function activarMicrofonoCarro() {
             const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
             if (!SpeechRecognition) {
-                alert("Tu navegador no soporta Speech Recognition");
+                showNotification("Tu navegador no soporta reconocimiento de voz");
                 return;
             }
 
@@ -214,11 +236,10 @@
             recognition.interimResults = false;
             recognition.maxAlternatives = 1;
 
-            alert("Di un comando como: añadir ___, borrar ___, volver");
-
             recognition.start();
+            showNotification("Di un comando...");
 
-            recognition.onresult = function (event) {
+            recognition.onresult = function(event) {
                 const transcript = event.results[0][0].transcript.toLowerCase().trim();
                 console.log("Reconocido:", transcript);
 
@@ -228,46 +249,40 @@
                     if (articulo) {
                         añadirArticuloReconocido(articulo);
                     } else {
-                        alert("No entendí qué artículo añadir.");
+                        showNotification("No entendí qué artículo añadir.");
                     }
-
                 } else if (transcript.startsWith("borrar")) {
                     const articulo = transcript.replace("borrar", "").trim();
                     if (articulo) {
                         borrarArticuloReconocido(articulo);
                     } else {
-                        alert("No entendí qué artículo borrar.");
+                        showNotification("No entendí qué artículo borrar.");
                     }
-
                 } else if (transcript.includes("volver")) {
                     volverAlMenu();
-
                 } else {
-                    alert("Comando no reconocido: " + transcript);
+                    showNotification("Comando no reconocido");
                 }
             };
 
-            recognition.onerror = function (event) {
-                alert("Error en reconocimiento: " + event.error);
+            recognition.onerror = function(event) {
+                showNotification("Error en reconocimiento: " + event.error);
             };
         }
 
         // Añadir artículo desde comando por voz
         function añadirArticuloReconocido(nombreArticulo) {
             const articuloCap = nombreArticulo.charAt(0).toUpperCase() + nombreArticulo.slice(1).toLowerCase();
-
             const lista = document.getElementById("listaArticulos");
             const li = document.createElement("li");
             li.innerHTML = `
-        <span>${articuloCap}</span>
-        <button onclick="borrarArticulo(this)">Borrar</button>
-    `;
+                <span>${articuloCap}</span>
+                <button onclick="borrarArticulo(this)">Borrar</button>
+            `;
             lista.appendChild(li);
 
             ordenarLista();
             guardarLista();
-
-            //alert(`Artículo añadido: ${articuloCap}`);
         }
 
         // Borrar artículo desde comando por voz
@@ -287,16 +302,46 @@
             });
 
             if (encontrado) {
-                //alert(`Artículo borrado: ${nombreArticulo}`);
                 guardarLista();
             } else {
-                alert(`No se encontró el artículo: ${nombreArticulo}`);
+                showNotification(`No se encontró: ${nombreArticulo}`);
             }
         }
-        // Cargar la lista al iniciar la página
-        document.addEventListener("DOMContentLoaded", cargarLista);
-    </script>
-    <script src="/socket.io/socket.io.js"></script>
-</body>
 
+        // Escuchar actualizaciones de la lista
+    socket.on("cliente:mensaje", (data) => {
+        if (data.tipo === "lista-compra" && data.items) {
+            localStorage.setItem('listaCompra', JSON.stringify(data.items));
+            // Forzar recarga de la página para mostrar cambios
+            location.reload();
+        }
+    });
+
+    socket.on("carrito:mensaje", (data) => {
+        if (data.tipo === "lista-compra" && data.items) {
+            localStorage.setItem('listaCompra', JSON.stringify(data.items));
+            // Forzar recarga de la página para mostrar cambios
+            location.reload();
+        }
+    });
+
+        // Cargar la lista al iniciar la página
+        document.addEventListener("DOMContentLoaded", () => {
+            // Solicitar lista actual al conectarse
+            if (esCarrito) {
+                socket.emit("carrito:mensaje", {
+                    tipo: "lista-compra",
+                    mensaje: "Solicitando lista actual"
+                });
+            } else {
+                socket.emit("cliente:mensaje", {
+                    tipo: "lista-compra",
+                    mensaje: "Solicitando lista actual"
+                });
+            }
+            
+            cargarLista();
+        });
+    </script>
+</body>
 </html>

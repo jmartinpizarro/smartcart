@@ -32,11 +32,26 @@
             align-items: center;
             justify-content: center;
         }
+        .notification {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0,0,0,0.7);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 5px;
+            z-index: 1000;
+            display: none;
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <h1 class="text-center mb-4">¡Bienvenido a SmartCart!</h1>
+
+        <!-- Notificación -->
+        <div class="notification" id="notification"></div>
 
         <!-- Botones grandes en vertical -->
         <div class="d-grid gap-3">
@@ -49,17 +64,92 @@
     <!-- Botón de micrófono -->
     <button class="btn btn-primary btn-mic" onclick="activarMicrofono()">🎤</button>
 
-    <!-- Incluir Socket.io desde el servidor -->
+    <!-- Socket.io -->
     <script src="/socket.io/socket.io.js"></script>
     <script>
-        const socket = io();  // Conectar al servidor
+        const socket = io();
+        const notification = document.getElementById('notification');
+
+        // Mostrar notificación
+        function showNotification(message) {
+            notification.textContent = message;
+            notification.style.display = 'block';
+            setTimeout(() => {
+                notification.style.display = 'none';
+            }, 3000);
+        }
+
+        // Escuchar mensajes del carrito
+        socket.on("cliente:mensaje", (data) => {
+            console.log("Mensaje del carrito:", data);
+            showNotification(`Carrito: ${data.mensaje}`);
+            
+            if (data.tipo === "lista-compra" && data.items) {
+                // Guardar lista en localStorage para usarla en listacompra.html
+                localStorage.setItem('listaCompra', JSON.stringify(data.items));
+            }
+        });
 
         // Funciones para las acciones
+        function escanearArticulo() {
+            socket.emit("cliente:mensaje", {
+                tipo: "escanear",
+                mensaje: "Preparando escáner de código de barras"
+            });
+            window.location.href = './camara.html';
+        }
+
+        function verListaCompra() {
+            socket.emit("cliente:mensaje", {
+                tipo: "lista-compra",
+                mensaje: "Solicitando lista de compra actual"
+            });
+            window.location.href = "./listacompra.html";
+        }
+
+        function abrirAjustes() {
+            socket.emit("cliente:mensaje", {
+                tipo: "ajustes",
+                mensaje: "Abriendo configuración"
+            });
+            showNotification("Abriendo ajustes...");
+        }
+
+        // Control por voz
+        function activarMicrofono() {
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            if (!SpeechRecognition) {
+                showNotification("Tu navegador no soporta reconocimiento de voz");
+                return;
+            }
+
+            const recognition = new SpeechRecognition();
+            recognition.lang = 'es-ES';
+            recognition.interimResults = false;
+            recognition.maxAlternatives = 1;
+
+            recognition.start();
+            showNotification("Di un comando...");
+
+            recognition.onresult = function(event) {
+                const transcript = event.results[0][0].transcript.toLowerCase();
+                console.log("Reconocido:", transcript);
+
+                if (transcript.includes("escanear")) {
+                    escanearArticulo();
+                } else if (transcript.includes("lista")) {
+                    verListaCompra();
+                } else if (transcript.includes("ajustes")) {
+                    abrirAjustes();
+                } else {
+                    showNotification("Comando no reconocido");
+                }
+            };
 
             recognition.onerror = function(event) {
-                alert("Error en reconocimiento: " + event.error);
+                showNotification("Error en reconocimiento: " + event.error);
             };
+        }
     </script>
-    <script src="/socket.io/socket.io.js"></script>
 </body>
 </html>
