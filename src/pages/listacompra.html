@@ -101,8 +101,30 @@
     <script src="/socket.io/socket.io.js"></script>
     <script>
         const socket = io();
+        // Solicitar los datos cuando se levanta la interfaz del movil
+        socket.emit("solicitarDatos");
         const notification = document.getElementById('notification');
         let esCarrito = window.location.pathname.includes('carrito');
+
+        socket.on("sincronizarCarrito", (data) => {
+            console.log("🛒 Carrito actualizado:", data);
+        });
+
+        socket.on("sincronizarListaCompra", (data) => {
+            console.log("📜 Lista de compra actualizada:", data);
+            const lista = document.getElementById("listaArticulos");
+            lista.innerHTML="";
+            // cargarLista();
+            const articulosGuardados = data.listaCompra || [];
+            articulosGuardados.forEach(articulo => {
+            const li = document.createElement("li");
+            li.innerHTML = `
+                <span>${articulo}</span>
+                <button onclick="borrarArticulo(this)">Borrar</button>
+            `;
+            lista.appendChild(li);
+            });
+        });
 
         // Mostrar notificación
         function showNotification(message) {
@@ -114,52 +136,40 @@
         }
 
         // Función para cargar la lista desde localStorage
-        function cargarLista() {
+        /*function cargarLista() {
             const lista = document.getElementById("listaArticulos");
-            const articulosGuardados = JSON.parse(localStorage.getItem("listaCompra")) || [];
+            //const articulosGuardados = JSON.parse(localStorage.getItem("listaCompra")) || [];
             
             // Limpiar lista antes de cargar
             lista.innerHTML = "";
-            
-            articulosGuardados.forEach(articulo => {
+
+            socket.on("sincronizarListaCompra", (data) => {
+                console.log("bombaaaaaa");
+                const articulosGuardados = data.listaCompra || [];
+                articulosGuardados.forEach(articulo => {
                 const li = document.createElement("li");
                 li.innerHTML = `
                     <span>${articulo}</span>
                     <button onclick="borrarArticulo(this)">Borrar</button>
                 `;
                 lista.appendChild(li);
+                });
             });
-        }
+
+            socket.emit("solicitarDatos");
+        }*/
 
         // Función para guardar la lista y sincronizar
         function guardarLista() {
-    const lista = document.getElementById("listaArticulos");
-    const articulos = Array.from(lista.getElementsByTagName("li")).map(li => li.querySelector("span").textContent);
-    const listaAnterior = JSON.parse(localStorage.getItem('listaCompra')) || [];
-    
-    // Solo enviar si hay cambios reales
-    if (JSON.stringify(articulos) !== JSON.stringify(listaAnterior)) {
-        // Guardar en localStorage
-        localStorage.setItem('listaCompra', JSON.stringify(articulos));
-        
-        // Enviar actualización a través de WebSocket
-        if (esCarrito) {
-            socket.emit("carrito:mensaje", {
-                tipo: "lista-compra",
-                items: articulos,
-                mensaje: "Lista actualizada desde carrito"
-            });
-        } else {
-            socket.emit("cliente:mensaje", {
-                tipo: "lista-compra",
-                items: articulos,
-                mensaje: "Lista actualizada desde móvil"
-            });
+            const lista = document.getElementById("listaArticulos");
+            const articulos = Array.from(lista.getElementsByTagName("li")).map(li => li.querySelector("span").textContent);
+            
+            socket.emit("móvil:actualizarListaCompra", (articulos));
+
+            showNotification("Lista actualizada");
+
+            //cargarLista();
         }
-        
-        showNotification("Lista actualizada");
-    }
-}
 
         // Función para añadir un artículo a la lista
         function agregarArticulo() {
@@ -308,7 +318,7 @@
             }
         }
 
-        // Escuchar actualizaciones de la lista
+    // Escuchar actualizaciones de la lista
     socket.on("cliente:mensaje", (data) => {
         if (data.tipo === "lista-compra" && data.items) {
             localStorage.setItem('listaCompra', JSON.stringify(data.items));
@@ -340,7 +350,7 @@
                 });
             }
             
-            cargarLista();
+            //cargarLista();
         });
     </script>
 </body>

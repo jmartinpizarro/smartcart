@@ -88,6 +88,7 @@
                     </div>
                 `;
                 cartContainer.appendChild(producto);
+                socket.emit("carrito:agregarProducto", item);
             });
             document.getElementById("total").innerText = total;
         }
