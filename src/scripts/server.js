@@ -2,10 +2,24 @@ const express = require("express");
 const { createServer } = require("http");
 const { Server } = require("socket.io");
 const path = require("path");
+const tf = require("@tensorflow/tfjs-node");
 
 const app = express();
 const httpServer = createServer(app);
 const io = new Server(httpServer);
+
+let model = null;
+const MODEL_ROUTE = path.join(__dirname, "..", "..", "public", 'model_tfjs');
+console.log(MODEL_ROUTE);
+// Carga el modelo al iniciar
+(async () => {
+  try {
+    model = await tf.loadLayersModel(`file://${MODEL_ROUTE}/model.json`);
+    console.log("✅ Modelo cargado correctamente.");
+  } catch (error) {
+    console.error("❌ Error al cargar el modelo:", error);
+  }
+})();
 
 // Configuración de archivos estáticos
 const PAGES_ROUTE = path.join(__dirname, "..", "pages");
