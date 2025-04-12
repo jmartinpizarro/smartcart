@@ -8,7 +8,8 @@ import io
 app = FastAPI()
 
 # Cargar modelo YOLOv5s preentrenado (detecta 80 clases COCO)
-model = torch.hub.load('ultralytics/yolov5', 'yolov5s', pretrained=True)
+model = torch.load("yolov5s.pt", map_location="cpu")
+model.eval()
 
 # Clases objetivo que nos interesan
 target_classes = {
