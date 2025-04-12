@@ -3,15 +3,19 @@ const { createServer } = require("http");
 const { Server } = require("socket.io");
 const path = require("path");
 const tf = require("@tensorflow/tfjs-node");
+const multer = require("multer");
+const fs = require("fs");
+const axios = require("axios");
+const FormData = require("form-data");
 
 const app = express();
 const httpServer = createServer(app);
 const io = new Server(httpServer);
 
+// Carga modelo local (tfjs)
 let model = null;
-const MODEL_ROUTE = path.join(__dirname, "..", "..", "public", 'model_tfjs');
+const MODEL_ROUTE = path.join(__dirname, "..", "..", "public", "model_tfjs");
 console.log(MODEL_ROUTE);
-// Carga el modelo al iniciar
 (async () => {
   try {
     model = await tf.loadLayersModel(`file://${MODEL_ROUTE}/model.json`);
@@ -21,11 +25,11 @@ console.log(MODEL_ROUTE);
   }
 })();
 
-// Configuración de archivos estáticos
+// Archivos estáticos
 const PAGES_ROUTE = path.join(__dirname, "..", "pages");
 app.use(express.static(PAGES_ROUTE));
 
-// Rutas
+// Rutas HTML
 app.get("/", (req, res) => {
   res.sendFile(path.join(PAGES_ROUTE, "index.html"));
 });
@@ -34,53 +38,79 @@ app.get("/carrito", (req, res) => {
   res.sendFile(path.join(PAGES_ROUTE, "carrito.html"));
 });
 
-// Conexiones WebSocket
-// En server.js, modifica el manejo de mensajes así:
+// Configuración de Multer para recibir imágenes
+const upload = multer({ dest: "uploads/" });
+
+// 🔍 Hugging Face Token (reemplazá esto con el tuyo)
+const HUGGINGFACE_TOKEN = "TU_TOKEN_AQUI";
+
+// Endpoint /predict que usa Hugging Face
+app.post("/predict", upload.single("image"), async (req, res) => {
+  try {
+    const filePath = req.file.path;
+    const form = new FormData();
+    form.append("file", fs.createReadStream(filePath));
+
+    const response = await axios.post(
+      "https://api-inference.huggingface.co/models/facebook/detr-resnet-50",
+      form,
+      {
+        headers: {
+          ...form.getHeaders(),
+          Authorization: `Bearer ${HUGGINGFACE_TOKEN}`,
+        },
+      }
+    );
+
+    // Eliminar imagen temporal
+    fs.unlink(filePath, () => {});
+
+    res.json(response.data);
+  } catch (error) {
+    console.error("❌ Error al hacer la predicción:", error.response?.data || error.message);
+    res.status(500).json({ error: "Fallo en la predicción" });
+  }
+});
+
+// WebSocket
 io.on("connection", (socket) => {
   console.log("🔌 Cliente conectado:", socket.id);
-  
-  // Variable para almacenar el último estado conocido
   let lastKnownList = null;
-  
+
   socket.on("cliente:mensaje", (data) => {
     console.log("📱 Mensaje del cliente:", data);
-    
-    // Solo reenvía si es un mensaje diferente a la última lista conocida
     if (data.tipo === "lista-compra") {
       if (JSON.stringify(data.items) !== JSON.stringify(lastKnownList)) {
         lastKnownList = data.items;
         io.emit("carrito:mensaje", data);
       }
     } else {
-      // Para otros tipos de mensajes, reenvía normalmente
       io.emit("carrito:mensaje", data);
     }
   });
-  
+
   socket.on("carrito:mensaje", (data) => {
     console.log("🛒 Mensaje del carrito:", data);
-    
-    // Solo reenvía si es un mensaje diferente a la última lista conocida
     if (data.tipo === "lista-compra") {
       if (JSON.stringify(data.items) !== JSON.stringify(lastKnownList)) {
         lastKnownList = data.items;
         io.emit("cliente:mensaje", data);
       }
     } else {
-      // Para otros tipos de mensajes, reenvía normalmente
       io.emit("cliente:mensaje", data);
     }
   });
-  
+
   socket.on("disconnect", () => {
     console.log("❌ Cliente desconectado:", socket.id);
   });
 });
+
 // Exportar para Vercel (si es necesario)
 module.exports = app;
 
 // Iniciar servidor en desarrollo
-if (process.env.NODE_ENV !== 'production') {
+if (process.env.NODE_ENV !== "production") {
   const PORT = process.env.PORT || 3000;
   httpServer.listen(PORT, () => {
     console.log(`✅ Servidor corriendo en http://localhost:${PORT}`);
