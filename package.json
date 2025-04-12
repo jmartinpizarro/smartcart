@@ -20,7 +20,8 @@
   "dependencies": {
     "@tensorflow/tfjs-node": "^4.22.0",
     "express": "^4.21.2",
-    "socket.io": "^4.8.1"
+    "socket.io": "^4.8.1",
+    "vercel": "^41.6.0"
   },
   "devDependencies": {
     "@vercel/node": "^2.x",
