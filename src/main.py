@@ -4,12 +4,12 @@ from PIL import Image
 import numpy as np
 import torch
 import io
+from ultralytics import YOLO
 
 app = FastAPI()
 
 # Cargar modelo YOLOv5s preentrenado (detecta 80 clases COCO)
-model = torch.load("yolov5s.pt", map_location="cpu")
-model.eval()
+model = YOLO("yolov5s.pt")
 
 # Clases objetivo que nos interesan
 target_classes = {
@@ -32,12 +32,24 @@ async def predict(file: UploadFile = File(...)):
     image_bytes = await file.read()
     image = load_image(image_bytes)
 
-    # Inferencia
-    results = model(image)
-    detections = results.pandas().xyxy[0]  # dataframe con resultados
+    results = model.predict(image)
+    detections = results[0].boxes.data.cpu().numpy()
+    names = results[0].names
 
-    # Filtrar por las clases que queremos
-    filtered = detections[detections['name'].isin(target_classes)]
+    # Mapear los resultados a un formato legible
+    output = []
+    for box in detections:
+        x1, y1, x2, y2, conf, cls = box
+        class_name = names[int(cls)]
+        if class_name in target_classes:
+            output.append({
+                "name": class_name,
+                "confidence": float(conf),
+                "xmin": float(x1),
+                "ymin": float(y1),
+                "xmax": float(x2),
+                "ymax": float(y2)
+            })
 
-    response = filtered[['name', 'confidence', 'xmin', 'ymin', 'xmax', 'ymax']].to_dict(orient="records")
-    return {"detections": response}
+    return {"detections": output}
+
