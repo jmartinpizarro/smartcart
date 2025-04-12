@@ -7,7 +7,7 @@ const multer = require("multer");
 const fs = require("fs");
 const axios = require("axios");
 const FormData = require("form-data");
-require('dotenv').config();
+require("dotenv").config();
 
 const app = express();
 const httpServer = createServer(app);
@@ -29,34 +29,51 @@ app.get("/carrito", (req, res) => {
 // Configuración de Multer para recibir imágenes
 const upload = multer({ dest: "uploads/" });
 
-// 🔍 Hugging Face Token (reemplazá esto con el tuyo)
-const HUGGINGFACE_TOKEN = process.env.HUGGINGFACE_TOKEN;
+const OPENAI_API_KEY = process.env.OPENAI_KEY;
+console.log(OPENAI_API_KEY);
 
-// Endpoint /predict que usa Hugging Face
 app.post("/predict", upload.single("image"), async (req, res) => {
+  const filePath = req.file.path;
+
   try {
-    const filePath = req.file.path;
-    const form = new FormData();
-    form.append("file", fs.createReadStream(filePath));
+    const imageBase64 = fs.readFileSync(filePath, { encoding: "base64" });
 
     const response = await axios.post(
-      "https://api-inference.huggingface.co/models/facebook/detr-resnet-50",
-      form,
+      "https://api.openai.com/v1/chat/completions",
+      {
+        model: "gpt-4o",
+        messages: [
+          {
+            role: "user",
+            content: [
+              {
+                type: "text",
+                text: "Dime en una sola palabra qué objeto ves en la imagen.",
+              },
+              {
+                type: "image_url",
+                image_url: {
+                  url: `data:image/jpeg;base64,${imageBase64}`,
+                },
+              },
+            ],
+          },
+        ],
+        max_tokens: 10,
+      },
       {
         headers: {
-          ...form.getHeaders(),
-          Authorization: `Bearer ${HUGGINGFACE_TOKEN}`,
+          Authorization: `Bearer ${OPENAI_API_KEY}`,
+          "Content-Type": "application/json",
         },
       }
     );
 
-    // Eliminar imagen temporal
     fs.unlink(filePath, () => {});
-
-    res.json(response.data);
+    res.json({ prediccion: response.data.choices[0].message.content.trim() });
   } catch (error) {
-    console.error("❌ Error al hacer la predicción:", error.response?.data || error.message);
-    res.status(500).json({ error: "Fallo en la predicción" });
+    console.error("❌ Error al predecir con OpenAI:", error.response?.data || error.message);
+    res.status(500).json({ error: "Fallo en la predicción con OpenAI" });
   }
 });
 
