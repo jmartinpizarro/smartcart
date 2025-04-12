@@ -19,6 +19,7 @@
   "homepage": "https://github.com/jmartinpizarro/smartcart#readme",
   "dependencies": {
     "express": "^4.21.2",
+    "formidable": "^3.5.2",
     "socket.io": "^4.8.1"
   },
   "devDependencies": {
