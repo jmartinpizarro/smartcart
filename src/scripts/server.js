@@ -7,23 +7,11 @@ const multer = require("multer");
 const fs = require("fs");
 const axios = require("axios");
 const FormData = require("form-data");
+require('dotenv').config();
 
 const app = express();
 const httpServer = createServer(app);
 const io = new Server(httpServer);
-
-// Carga modelo local (tfjs)
-let model = null;
-const MODEL_ROUTE = path.join(__dirname, "..", "..", "public", "model_tfjs");
-console.log(MODEL_ROUTE);
-(async () => {
-  try {
-    model = await tf.loadLayersModel(`file://${MODEL_ROUTE}/model.json`);
-    console.log("✅ Modelo cargado correctamente.");
-  } catch (error) {
-    console.error("❌ Error al cargar el modelo:", error);
-  }
-})();
 
 // Archivos estáticos
 const PAGES_ROUTE = path.join(__dirname, "..", "pages");
@@ -42,7 +30,7 @@ app.get("/carrito", (req, res) => {
 const upload = multer({ dest: "uploads/" });
 
 // 🔍 Hugging Face Token (reemplazá esto con el tuyo)
-const HUGGINGFACE_TOKEN = "TU_TOKEN_AQUI";
+const HUGGINGFACE_TOKEN = process.env.HUGGINGFACE_TOKEN;
 
 // Endpoint /predict que usa Hugging Face
 app.post("/predict", upload.single("image"), async (req, res) => {
