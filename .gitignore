@@ -141,3 +141,6 @@ GroceryStoreDataset/
 .venv
 
 cnn_model/.ipynb_checkpoints/
+
+yolov5s.pt
+__pycache__
