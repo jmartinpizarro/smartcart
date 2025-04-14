@@ -78,7 +78,7 @@
             const mapHeight = 400;
             
             // Configuración de movimiento por GPS
-            const GPS_SENSITIVITY = 0.000002; // 1 unidad de cambio en coordenadas ≈ 3 pasos
+            const GPS_SENSITIVITY = 0.0001; // 1 unidad de cambio en coordenadas ≈ 3 pasos
             const STEPS_PER_UNIT = 3; // Cuántos pasos de mapa equivale a 1 unidad de coordenada
             let lastCoords = null;
             
@@ -171,29 +171,29 @@
                     userPosition.y = newY;
                     updateUserPosition();
                 } else {
-                    alert("❌ Movimiento bloqueado por obstáculo.");
+                    //alert("❌ Movimiento bloqueado por obstáculo.");
                 }
             }
 
 
             // Handle GPS movement and convert to steps
             function handleGPSMovement(newCoords) {
-                alert("🛰️ Nuevas coordenadas GPS:", newCoords);
+                //alert("🛰️ Nuevas coordenadas GPS:", newCoords);
 
                 if (!lastCoords) {
                     lastCoords = newCoords;
-                    alert("🧭 Coordenadas iniciales guardadas.");
+                    //alert("🧭 Coordenadas iniciales guardadas.");
                     return;
                 }
 
                 const latDiff = newCoords.latitude - lastCoords.latitude;
                 const lonDiff = newCoords.longitude - lastCoords.longitude;
 
-                alert(`📏 Diferencia LAT: ${latDiff}, LON: ${lonDiff}`);
+                //alert(`📏 Diferencia LAT: ${latDiff}, LON: ${lonDiff}`);
 
                 // Ignorar cambios muy pequeños
                 if (Math.abs(latDiff) < GPS_SENSITIVITY && Math.abs(lonDiff) < GPS_SENSITIVITY) {
-                    alert("🛑 Movimiento demasiado pequeño, ignorado.");
+                    //alert("🛑 Movimiento demasiado pequeño, ignorado.");
                     return;
                 }
 
@@ -203,7 +203,7 @@
                     const steps = Math.round(Math.abs(latDiff) / GPS_SENSITIVITY) * STEPS_PER_UNIT;
                     const direction = latDiff > 0 ? -stepSize : stepSize; // Norte = arriba (y disminuye)
 
-                    alert(`⬆️ Movimiento vertical: ${steps} pasos hacia ${direction < 0 ? 'abajo' : 'arriba'}`);
+                    //alert(`⬆️ Movimiento vertical: ${steps} pasos hacia ${direction < 0 ? 'abajo' : 'arriba'}`);
 
                     for (let i = 0; i < steps; i++) {
                         moveUser(0, direction);
@@ -213,7 +213,7 @@
                     const steps = Math.round(Math.abs(lonDiff) / GPS_SENSITIVITY) * STEPS_PER_UNIT;
                     const direction = lonDiff > 0 ? stepSize : -stepSize; // Este = derecha
 
-                    alert(`➡️ Movimiento horizontal: ${steps} pasos hacia ${direction > 0 ? 'derecha' : 'izquierda'}`);
+                    //alert(`➡️ Movimiento horizontal: ${steps} pasos hacia ${direction > 0 ? 'derecha' : 'izquierda'}`);
 
                     for (let i = 0; i < steps; i++) {
                         moveUser(direction, 0);
