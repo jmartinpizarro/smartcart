@@ -82,10 +82,30 @@
             border: none;
             border-radius: 4px;
         }
+
+        #status-badge {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            padding: 5px 10px;
+            border-radius: 15px;
+            font-size: 12px;
+            font-weight: bold;
+            color: white;
+        }
+
+        .status-active {
+            background-color: #4CAF50;
+        }
+
+        .status-inactive {
+            background-color: #f44336;
+        }
     </style>
 </head>
 <body>
     <h1>Smart Shopping Cart Map</h1>
+    <div id="status-badge" class="status-inactive">Rastreo inactivo</div>
     <div id="supermarket-map">
         <!-- Aisles will be added here -->
         <div id="user-dot"></div>
@@ -95,6 +115,7 @@
         <button id="calibrate-button">Calibrar Sensores</button>
         <button id="reset-button">Reiniciar Posición</button>
         <button id="back-button">Volver al Carrito</button>
+        <button id="tracking-toggle">Iniciar Rastreo</button>
     </div>
     
     <div id="sensor-data">
@@ -102,6 +123,7 @@
         <p>Pasos detectados: <span id="step-count" class="sensor-value">0</span></p>
         <p>Dirección: <span id="direction" class="sensor-value">N/A</span></p>
         <p>Posición: <span id="position-display" class="sensor-value">(0, 0)</span></p>
+        <p>Última actualización: <span id="last-update" class="sensor-value">Nunca</span></p>
     </div>
     
     <script>
@@ -116,7 +138,7 @@
             const COMPASS_SMOOTHING = 5;    // Cuántas lecturas de brújula promediar
             
             // Load or initialize user position
-            let userPosition = loadPosition() || { x: 30, y: 370 };
+            let userPosition = { x: 30, y: 370 };
             const stepSize = 10;            // Cuánto avanza el usuario en el mapa por paso
             
             // Sensor state variables
@@ -128,6 +150,7 @@
             let currentDirection = 0;       // 0 grados = norte
             let isMoving = false;
             let lastMotionTime = 0;
+            let isTracking = false;
             
             // Get DOM elements
             const userDot = document.getElementById('user-dot');
@@ -139,9 +162,15 @@
             const calibrateButton = document.getElementById('calibrate-button');
             const resetButton = document.getElementById('reset-button');
             const backButton = document.getElementById('back-button');
+            const trackingToggle = document.getElementById('tracking-toggle');
+            const statusBadge = document.getElementById('status-badge');
+            const lastUpdateDisplay = document.getElementById('last-update');
             
             // Array to store shelf boundaries for collision detection
             const obstacles = [];
+
+            // Tracking variables
+            let trackingInterval = null;
             
             // Create supermarket aisles (that will act as obstacles)
             function createAisles() {
@@ -167,22 +196,64 @@
                 }
             }
             
-            // Load position from localStorage
-            function loadPosition() {
-                const savedPos = localStorage.getItem('cartPosition');
-                return savedPos ? JSON.parse(savedPos) : null;
+            // Load position and navigation data from localStorage
+            function loadNavigationData() {
+                const savedData = localStorage.getItem('cartNavigationData');
+                if (savedData) {
+                    const data = JSON.parse(savedData);
+                    userPosition = data.position;
+                    stepCount = data.stepCount || 0;
+                    stepCountDisplay.textContent = stepCount;
+                    currentDirection = data.direction || 0;
+                    updateDirectionDisplay(currentDirection);
+                    updateLastUpdateTime(data.lastUpdated);
+                    return data.position;
+                }
+                return null;
             }
             
-            // Save position to localStorage
-            function savePosition() {
-                localStorage.setItem('cartPosition', JSON.stringify(userPosition));
+            // Save position and navigation data to localStorage
+            function saveNavigationData() {
+                const navigationData = {
+                    position: userPosition,
+                    stepCount: stepCount,
+                    direction: currentDirection,
+                    lastUpdated: Date.now(),
+                    isTracking: isTracking
+                };
+                localStorage.setItem('cartNavigationData', JSON.stringify(navigationData));
+                updateLastUpdateTime(navigationData.lastUpdated);
+                
+                // Post message to Service Worker to update data
+                if (navigator.serviceWorker && navigator.serviceWorker.controller) {
+                    navigator.serviceWorker.controller.postMessage({
+                        type: 'UPDATE_NAVIGATION',
+                        data: navigationData
+                    });
+                }
+            }
+            
+            // Format and display the last update time
+            function updateLastUpdateTime(timestamp) {
+                if (!timestamp) {
+                    lastUpdateDisplay.textContent = "Nunca";
+                    return;
+                }
+                
+                const date = new Date(timestamp);
+                const formattedTime = date.toLocaleTimeString([], {
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    second: '2-digit'
+                });
+                lastUpdateDisplay.textContent = formattedTime;
             }
             
             // Update user position on the map
             function updateUserPosition() {
                 userDot.style.transform = `translate(${userPosition.x - 7.5}px, ${userPosition.y - 7.5}px)`;
                 positionDisplay.textContent = `(${Math.round(userPosition.x)}, ${Math.round(userPosition.y)})`;
-                savePosition();
+                saveNavigationData();
             }
             
             // Check if a position would collide with any obstacle
@@ -358,7 +429,7 @@
             function setupMotionListeners() {
                 // Listen for motion events (accelerometer)
                 window.addEventListener('devicemotion', (event) => {
-                    if (!isCalibrated) return;
+                    if (!isCalibrated || !isTracking) return;
                     
                     const acceleration = {
                         x: event.accelerationIncludingGravity.x || 0,
@@ -371,6 +442,8 @@
                 
                 // Listen for orientation events (compass)
                 window.addEventListener('deviceorientation', (event) => {
+                    if (!isTracking) return;
+                    
                     // Get compass heading (alpha) in degrees
                     let heading = event.alpha || 0;
                     
@@ -386,19 +459,121 @@
                     
                     // Update UI
                     updateDirectionDisplay(currentDirection);
+                    
+                    // Save data periodically
+                    saveNavigationData();
                 });
+            }
+            
+            // Start the tracking process
+            function startTracking() {
+                if (isTracking) return;
+                
+                isTracking = true;
+                statusBadge.textContent = "Rastreo activo";
+                statusBadge.className = "status-active";
+                trackingToggle.textContent = "Detener Rastreo";
+                
+                // Start periodic saving
+                if (trackingInterval) clearInterval(trackingInterval);
+                trackingInterval = setInterval(saveNavigationData, 5000); // Save every 5 seconds
+                
+                saveNavigationData();
+                
+                // Notify the service worker
+                if (navigator.serviceWorker && navigator.serviceWorker.controller) {
+                    navigator.serviceWorker.controller.postMessage({
+                        type: 'START_TRACKING'
+                    });
+                }
+            }
+            
+            // Stop the tracking process
+            function stopTracking() {
+                if (!isTracking) return;
+                
+                isTracking = false;
+                statusBadge.textContent = "Rastreo inactivo";
+                statusBadge.className = "status-inactive";
+                trackingToggle.textContent = "Iniciar Rastreo";
+                
+                // Stop periodic saving
+                if (trackingInterval) {
+                    clearInterval(trackingInterval);
+                    trackingInterval = null;
+                }
+                
+                saveNavigationData();
+                
+                // Notify the service worker
+                if (navigator.serviceWorker && navigator.serviceWorker.controller) {
+                    navigator.serviceWorker.controller.postMessage({
+                        type: 'STOP_TRACKING'
+                    });
+                }
+            }
+            
+            // Toggle tracking state
+            function toggleTracking() {
+                if (isTracking) {
+                    stopTracking();
+                } else {
+                    if (!isCalibrated) {
+                        alert("Por favor calibra los sensores antes de iniciar el rastreo");
+                        return;
+                    }
+                    startTracking();
+                }
+            }
+            
+            // Check if background tracking is supported
+            function isBackgroundTrackingSupported() {
+                return 'serviceWorker' in navigator && 'Notification' in window;
+            }
+            
+            // Register the service worker
+            function registerServiceWorker() {
+                if (!isBackgroundTrackingSupported()) {
+                    console.warn("El rastreo en segundo plano no está soportado en este navegador");
+                    return Promise.reject("Service Workers no soportados");
+                }
+                
+                return navigator.serviceWorker.register('navigation-worker.js')
+                    .then(registration => {
+                        console.log('Service Worker registrado con éxito:', registration);
+                        
+                        // Request notification permission for background tracking
+                        return Notification.requestPermission();
+                    })
+                    .then(permission => {
+                        if (permission === 'granted') {
+                            console.log('Permiso de notificaciones concedido');
+                        } else {
+                            console.warn('Permiso de notificaciones denegado');
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error al registrar el Service Worker:', error);
+                    });
             }
             
             // Initialize the map and sensors
             function init() {
+                // Create map elements
                 createAisles();
+                
+                // Load saved navigation data
+                loadNavigationData();
                 updateUserPosition();
+                
+                // Register service worker for background tracking
+                registerServiceWorker();
                 
                 // Setup button event listeners
                 calibrateButton.addEventListener('click', () => {
                     calibrateAccelerometer()
                         .then(() => {
-                            alert("Calibración completada. Ahora puedes caminar.");
+                            alert("Calibración completada. Ahora puedes iniciar el rastreo.");
                         })
                         .catch(error => {
                             alert("Error en calibración: " + error);
@@ -413,14 +588,33 @@
                 });
                 
                 backButton.addEventListener('click', () => {
+                    // Ensure tracking state is saved before leaving
+                    saveNavigationData();
                     window.location.href = 'carrito.html';
                 });
+                
+                trackingToggle.addEventListener('click', toggleTracking);
+                
+                // Check if we need to restore tracking state
+                const savedData = localStorage.getItem('cartNavigationData');
+                if (savedData) {
+                    const data = JSON.parse(savedData);
+                    if (data.isTracking) {
+                        // Only auto-start if we have calibration
+                        if (isCalibrated) {
+                            startTracking();
+                        }
+                    }
+                }
                 
                 // Request permissions and setup sensors
                 requestSensorPermissions();
                 
                 // Add keyboard controls for testing (mainly for desktop)
                 document.addEventListener('keydown', (e) => {
+                    // Only process key events if tracking is active
+                    if (!isTracking && e.key !== ' ') return;
+                    
                     switch(e.key) {
                         case 'ArrowLeft': 
                             currentDirection = 270;
@@ -442,15 +636,42 @@
                             updateDirectionDisplay(currentDirection);
                             moveUser(currentDirection);
                             break;
-                        case ' ': // Spacebar simulates a step
-                            stepCount++;
-                            stepCountDisplay.textContent = stepCount;
-                            moveUser(currentDirection);
+                        case ' ': // Spacebar toggles tracking
+                            toggleTracking();
                             break;
                     }
                 });
+                
+                // Listen for messages from the service worker
+                navigator.serviceWorker.addEventListener('message', (event) => {
+                    if (event.data.type === 'BACKGROUND_UPDATE') {
+                        // Update UI with data from background tracking
+                        const data = event.data.data;
+                        if (data) {
+                            userPosition = data.position;
+                            stepCount = data.stepCount;
+                            currentDirection = data.direction;
+                            
+                            // Update displays
+                            updateUserPosition();
+                            stepCountDisplay.textContent = stepCount;
+                            updateDirectionDisplay(currentDirection);
+                            updateLastUpdateTime(data.lastUpdated);
+                        }
+                    }
+                });
+                
+                // Set up periodic updates from service worker
+                setInterval(() => {
+                    if (navigator.serviceWorker && navigator.serviceWorker.controller) {
+                        navigator.serviceWorker.controller.postMessage({
+                            type: 'REQUEST_UPDATE'
+                        });
+                    }
+                }, 5000); // Check for updates every 5 seconds
             }
             
+            // Start the initialization
             init();
         });
     </script>

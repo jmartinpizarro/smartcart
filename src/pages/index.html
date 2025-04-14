@@ -150,6 +150,53 @@
                 showNotification("Error en reconocimiento: " + event.error);
             };
         }
+    
+        function loadNavigationData() {
+                const savedData = localStorage.getItem('cartNavigationData');
+                
+                if (savedData) {
+                    const data = JSON.parse(savedData);
+                    updateNavigationDisplay(data);
+                    
+                    // También solicitar actualizaciones al Service Worker
+                    if (navigator.serviceWorker && navigator.serviceWorker.controller) {
+                        navigator.serviceWorker.controller.postMessage({
+                            type: 'REQUEST_UPDATE'
+                        });
+                    }
+                }
+            }
+            
+            // Actualizar la visualización de los datos de navegación
+            function updateNavigationDisplay(data) {
+                if (!data) return;
+                
+                // Actualizar posición
+                if (data.position) {
+                    lastPositionDisplay.textContent = `(${Math.round(data.position.x)}, ${Math.round(data.position.y)})`;
+                }
+                
+                // Actualizar tiempo
+                if (data.lastUpdated) {
+                    const date = new Date(data.lastUpdated);
+                    lastUpdateDisplay.textContent = date.toLocaleTimeString([], {
+                        hour: '2-digit',
+                        minute: '2-digit',
+                        second: '2-digit'
+                    });
+                }
+                
+                // Actualizar estado de rastreo
+                if (data.isTracking) {
+                    trackingStatusDisplay.textContent = 'Activo';
+                    locationBadge.textContent = 'Rastreo activo';
+                    locationBadge.className = 'status-active';
+                } else {
+                    trackingStatusDisplay.textContent = 'Inactivo';
+                    locationBadge.textContent = 'Sin rastreo';
+                    locationBadge.className = 'status-inactive';
+                }
+            }
     </script>
 </body>
 </html>
