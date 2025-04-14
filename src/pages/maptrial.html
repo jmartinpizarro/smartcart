@@ -77,22 +77,13 @@
             const mapWidth = 600;
             const mapHeight = 400;
             
+            // Configuración de movimiento por GPS
+            const GPS_SENSITIVITY = 0.000002; // 1 unidad de cambio en coordenadas ≈ 3 pasos
+            const STEPS_PER_UNIT = 3; // Cuántos pasos de mapa equivale a 1 unidad de coordenada
+            let lastCoords = null;
+            
             // Load or initialize user position
             let userPosition = loadPosition() || { x: 10, y: 390 };
-
-            navigator.geolocation.getCurrentPosition(pos => {
-                userRealPosition = {
-                    latitude: pos.coords.latitude,
-                    longitude: pos.coords.longitude
-                };
-                console.log("Posición guardada:", userPosition);
-            });
-
-        //x:10 e y:390 son la esquina inferior izquierda del mapa (la puerta de entrada)
-        //hay que hacer que se corresponda a las coordenadas geográficas
-
-
-            // Step size in pixels
             const stepSize = 10;
             
             // Get DOM elements
@@ -159,28 +150,79 @@
                 userDot.style.left = (userPosition.x - 7.5) + 'px';
                 userDot.style.top = (userPosition.y - 7.5) + 'px';
                 positionDisplay.textContent = `(${Math.round(userPosition.x)}, ${Math.round(userPosition.y)})`;
-                savePosition(); // Save position whenever it changes
+                savePosition();
             }
-            
-            // Move the user dot with obstacle detection
+
             function moveUser(dx, dy) {
-                // Calculate new position
                 const newX = userPosition.x + dx;
                 const newY = userPosition.y + dy;
-                
+
+
                 // Check map boundaries first
-                if (newX < 10 || newX > mapWidth - 10 || 
+                if (newX < 10 || newX > mapWidth - 10 ||
                     newY < 10 || newY > mapHeight - 10) {
-                    return; // Don't move outside map
+                    console.warn("🚧 Movimiento bloqueado por límite del mapa.");
+                    return;
                 }
-                
+
                 // Check for collisions with obstacles
                 if (!isColliding(newX, newY)) {
                     userPosition.x = newX;
                     userPosition.y = newY;
                     updateUserPosition();
+                } else {
+                    alert("❌ Movimiento bloqueado por obstáculo.");
                 }
             }
+
+
+            // Handle GPS movement and convert to steps
+            function handleGPSMovement(newCoords) {
+                alert("🛰️ Nuevas coordenadas GPS:", newCoords);
+
+                if (!lastCoords) {
+                    lastCoords = newCoords;
+                    alert("🧭 Coordenadas iniciales guardadas.");
+                    return;
+                }
+
+                const latDiff = newCoords.latitude - lastCoords.latitude;
+                const lonDiff = newCoords.longitude - lastCoords.longitude;
+
+                alert(`📏 Diferencia LAT: ${latDiff}, LON: ${lonDiff}`);
+
+                // Ignorar cambios muy pequeños
+                if (Math.abs(latDiff) < GPS_SENSITIVITY && Math.abs(lonDiff) < GPS_SENSITIVITY) {
+                    alert("🛑 Movimiento demasiado pequeño, ignorado.");
+                    return;
+                }
+
+                // Determinar dirección principal y calcular pasos
+                if (Math.abs(latDiff) > Math.abs(lonDiff)) {
+                    // Movimiento vertical (norte/sur)
+                    const steps = Math.round(Math.abs(latDiff) / GPS_SENSITIVITY) * STEPS_PER_UNIT;
+                    const direction = latDiff > 0 ? -stepSize : stepSize; // Norte = arriba (y disminuye)
+
+                    alert(`⬆️ Movimiento vertical: ${steps} pasos hacia ${direction < 0 ? 'abajo' : 'arriba'}`);
+
+                    for (let i = 0; i < steps; i++) {
+                        moveUser(0, direction);
+                    }
+                } else {
+                    // Movimiento horizontal (este/oeste)
+                    const steps = Math.round(Math.abs(lonDiff) / GPS_SENSITIVITY) * STEPS_PER_UNIT;
+                    const direction = lonDiff > 0 ? stepSize : -stepSize; // Este = derecha
+
+                    alert(`➡️ Movimiento horizontal: ${steps} pasos hacia ${direction > 0 ? 'derecha' : 'izquierda'}`);
+
+                    for (let i = 0; i < steps; i++) {
+                        moveUser(direction, 0);
+                    }
+                }
+
+                lastCoords = newCoords;
+            }
+
             
             // Initialize the map
             function init() {
@@ -198,7 +240,7 @@
                     window.location.href = 'carrito.html';
                 });
                 
-                // Add keyboard controls for easier testing
+                // Add keyboard controls
                 document.addEventListener('keydown', (e) => {
                     switch(e.key) {
                         case 'ArrowLeft': moveUser(-stepSize, 0); break;
@@ -208,125 +250,29 @@
                     }
                 });
                 
-                // Simulate position updates even when not on this page
-                // This would be replaced with actual position updates from your sensors
-                if (typeof io !== 'undefined') {
-                    const socket = io();
-                    socket.on('positionUpdate', (newPos) => {
-                        userPosition = newPos;
-                        updateUserPosition();
-                    });
-                }
-            }
-            
-
-            //CÓDIGO PARA COORDENADAS DEL MAPA
-            let userPosicionActual = null;
-            let userPosicionNueva = null;
-
-            const MOVEMENT_THRESHOLD = 10;
-
-            function checkDireccion(userPosicionNueva) {
-                if (!userPosicionActual) {
-                    userPosicionActual = userPosicionNueva;
-                    return null; // No hay dirección la primera vez
-                }
-
-                const latDiff = userPosicionNueva.latitude - userPosicionActual.latitude;
-                const lonDiff = userPosicionNueva.longitude - userPosicionActual.longitude;
-
-                // Determina la dirección basada en los cambios de latitud y longitud
-                if (Math.abs(latDiff) > Math.abs(lonDiff)) {
-                    if (latDiff > 0) {
-                        return 'arriba';
-                    } else {
-                        return 'abajo';
-                    }
-                } else {
-                    if (lonDiff > 0) {
-                        return 'derecha';
-                    } else {
-                        return 'izquierda';
-                    }
-                }
-            }
-
-            function onUserMovement(direction) {
-                console.log(`El usuario se movió hacia: ${direction}`);
-
-                // Ejecuta diferentes funciones según la dirección
-                switch (direction) {
-                    case 'arriba':
-                        moveUser(0, -stepSize);
-                        break;
-                    case 'abajo':
-                        moveUser(0, stepSize);
-                        break;
-                    case 'derecha':
-                        moveUser(stepSize, 0);
-                        break;
-                    case 'izquierda':
-                        moveUser(-stepSize, 0);
-                        break;
-                }
-            }
-
-            const watchId = navigator.geolocation.watchPosition(
-                (position) => {
-                    const userPosicionNueva = {
-                        latitude: position.coords.latitude,
-                        longitude: position.coords.longitude
-                    };
-
-                    // Si hay una posición previa, verifica si el movimiento supera el umbral
-                    if (userPosicionActual) {
-                        const distance = calculateDistance(
-                            userPosicionActual.latitude,
-                            userPosicionActual.longitude,
-                            userPosicionNueva.latitude,
-                            userPosicionNueva.longitude
-                        );
-
-                        if (distance >= MOVEMENT_THRESHOLD) {
-                            const direction = checkMovementDirection(userPosicionNueva);
-                            if (direction) {
-                                onUserMovement(direction);
-                            }
-                            userPosicionActual = userPosicionNueva; // Actualiza la posición anterior
+                // Start GPS tracking
+                if (navigator.geolocation) {
+                    const watchId = navigator.geolocation.watchPosition(
+                        (pos) => {
+                            handleGPSMovement({
+                                latitude: pos.coords.latitude,
+                                longitude: pos.coords.longitude
+                            });
+                        },
+                        (err) => console.error("GPS Error:", err),
+                        { 
+                            enableHighAccuracy: true,
+                            maximumAge: 0,
+                            timeout: 5000
                         }
-                    } else {
-                        userPosicionActual = userPosicionNueva; // Primera lectura
-                    }
-                },
-                (error) => {
-                    console.error("Error en geolocalización:", error);
-                },
-                {
-                    enableHighAccuracy: true, // Mayor precisión (GPS)
-                    maximumAge: 0,           // No usar datos en caché
-                    timeout: 5000            // Tiempo máximo de espera
+                    );
+                } else {
+                    console.warn("Geolocation is not supported by this browser");
                 }
-            );
-
-            function calculateDistance(lat1, lon1, lat2, lon2) {
-                const R = 6371e3; // Radio de la Tierra en metros
-                const φ1 = lat1 * Math.PI / 180;
-                const φ2 = lat2 * Math.PI / 180;
-                const Δφ = (lat2 - lat1) * Math.PI / 180;
-                const Δλ = (lon2 - lon1) * Math.PI / 180;
-
-                const a = Math.sin(Δφ / 2) * Math.sin(Δφ / 2) +
-                    Math.cos(φ1) * Math.cos(φ2) *
-                    Math.sin(Δλ / 2) * Math.sin(Δλ / 2);
-                const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-
-                return R * c; // Distancia en metros
             }
             
             init();
         });
-
-
     </script>
     <script src="/socket.io/socket.io.js"></script>
 </body>

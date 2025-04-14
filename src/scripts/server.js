@@ -2,6 +2,10 @@ const express = require("express");
 const { createServer } = require("http");
 const { Server } = require("socket.io");
 const path = require("path");
+const fs = require("fs");
+const { OpenAI } = require("openai");
+const multer = require("multer");
+require("dotenv").config();
 
 const app = express();
 const httpServer = createServer(app);
@@ -14,6 +18,48 @@ app.use(express.static(PAGES_ROUTE));
 // Rutas
 app.get("/", (req, res) => {
   res.sendFile(path.join(PAGES_ROUTE, "index.html"));
+});
+
+const upload = multer({ dest: "uploads/" });
+
+const openai = new OpenAI({
+  apiKey: process.env.OPENAI_KEY,
+});
+
+app.post("/predict", upload.single("image"), async (req, res) => {
+  try {
+    const imageBuffer = fs.readFileSync(req.file.path);
+    const base64Image = imageBuffer.toString("base64");
+
+    const response = await openai.chat.completions.create({
+      model: "gpt-4o",
+      messages: [
+        {
+          role: "user",
+          content: [
+            {
+              type: "image_url",
+              image_url: {
+                url: `data:${req.file.mimetype};base64,${base64Image}`,
+              },
+            },
+            {
+              type: "text",
+              text: "Describe con una sola o pocas palabras lo que ves. Sé conciso. De ser un producto de supermercado, responde con un nombre único (manzanas, platanos, brick de leche...)",
+            },
+          ],
+        },
+      ],
+    });
+
+    const result = response.choices[0].message.content;
+    res.json({ result });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Error al procesar la imagen" });
+  } finally {
+    fs.unlinkSync(req.file.path); // Borra la imagen temporal
+  }
 });
 
 app.get("/carrito", (req, res) => {
@@ -105,12 +151,9 @@ io.on("connection", (socket) => {
 // Exportar para Vercel (si es necesario)
 module.exports = app;
 
-// Iniciar servidor en desarrollo
-if (process.env.NODE_ENV !== 'production') {
-  const PORT = process.env.PORT || 3000;
-  httpServer.listen(PORT, () => {
-    console.log(`✅ Servidor corriendo en http://localhost:${PORT}`);
-    console.log(`📱 Cliente: http://localhost:${PORT}`);
-    console.log(`🛒 Carrito: http://localhost:${PORT}`);
-  });
-}
+const PORT = process.env.PORT || 8080;
+httpServer.listen(PORT, () => {
+  console.log(`✅ Servidor corriendo en http://localhost:${PORT}`);
+  console.log(`📱 Cliente: http://localhost:${PORT}`);
+  console.log(`🛒 Carrito: http://localhost:${PORT}/carrito`);
+});

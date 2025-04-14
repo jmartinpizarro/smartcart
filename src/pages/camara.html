@@ -30,6 +30,9 @@
     <button id="captureButton">Capturar Imagen</button>
     <button id = "volverAlMenu" onclick="window.location.href = './index.html';">Volver al menú</button>
     <canvas id="canvas" style="display: none;"></canvas>
+    <button id="enviarButton">Enviar a OpenAI</button>
+    <p id="respuestaTexto" style="text-align: center; font-size: 18px;"></p>
+
 
     <script>
         const video = document.getElementById('video');
@@ -63,6 +66,49 @@
 
         // Iniciar la cámara al cargar la página
         window.addEventListener('load', iniciarCamara);
+
+        const enviarButton = document.getElementById('enviarButton');
+        const respuestaTexto = document.getElementById('respuestaTexto');
+
+        function dataURLToBlob(dataURL) {
+            const byteString = atob(dataURL.split(',')[1]);
+            const mimeString = dataURL.split(',')[0].split(':')[1].split(';')[0];
+            const ab = new ArrayBuffer(byteString.length);
+            const ia = new Uint8Array(ab);
+            for (let i = 0; i < byteString.length; i++) {
+                ia[i] = byteString.charCodeAt(i);
+            }
+            return new Blob([ab], { type: mimeString });
+        }
+
+        async function enviarImagenAlServidor() {
+            const context = canvas.getContext('2d');
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            context.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+            const dataURL = canvas.toDataURL('image/png');
+            const imagenBlob = dataURLToBlob(dataURL);
+            const formData = new FormData();
+            formData.append('image', imagenBlob, 'captura.png');
+
+            respuestaTexto.textContent = "🔍 Analizando...";
+
+            try {
+                const response = await fetch('/predict', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const data = await response.json();
+                respuestaTexto.textContent = `🛒 Producto: ${data.result}`;
+            } catch (error) {
+                console.error('Error al enviar la imagen:', error);
+                respuestaTexto.textContent = "❌ Error al analizar la imagen.";
+            }
+        }
+
+        enviarButton.addEventListener('click', enviarImagenAlServidor);
     </script>
 </body>
 </html>
