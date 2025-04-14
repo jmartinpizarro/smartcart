@@ -111,12 +111,9 @@ io.on("connection", (socket) => {
 // Exportar para Vercel (si es necesario)
 module.exports = app;
 
-// Iniciar servidor en desarrollo
-if (process.env.NODE_ENV !== 'production') {
-  const PORT = process.env.PORT || 3000;
-  httpServer.listen(PORT, () => {
-    console.log(`✅ Servidor corriendo en http://localhost:${PORT}`);
-    console.log(`📱 Cliente: http://localhost:${PORT}`);
-    console.log(`🛒 Carrito: http://localhost:${PORT}/carrito`);
-  });
-}
+const PORT = process.env.PORT || 8080;
+httpServer.listen(PORT, () => {
+  console.log(`✅ Servidor corriendo en http://localhost:${PORT}`);
+  console.log(`📱 Cliente: http://localhost:${PORT}`);
+  console.log(`🛒 Carrito: http://localhost:${PORT}/carrito`);
+});
