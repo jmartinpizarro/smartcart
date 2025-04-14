@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html>
+
 <head>
     <title>Smart Shopping Cart Map - Inertial Navigation</title>
     <style>
@@ -9,7 +10,7 @@
             flex-direction: column;
             align-items: center;
         }
-        
+
         #supermarket-map {
             width: 600px;
             height: 400px;
@@ -18,7 +19,7 @@
             background-color: #f0f8ff;
             margin: 20px;
         }
-        
+
         #user-dot {
             width: 15px;
             height: 15px;
@@ -27,13 +28,13 @@
             position: absolute;
             transition: transform 0.3s ease;
         }
-        
+
         .aisle {
             position: absolute;
             background-color: #fff;
             border: 1px solid #ccc;
         }
-        
+
         #controls {
             margin: 20px;
             display: flex;
@@ -41,21 +42,21 @@
             flex-wrap: wrap;
             justify-content: center;
         }
-        
+
         button {
             padding: 10px 15px;
             margin: 0 5px;
             cursor: pointer;
             min-width: 120px;
         }
-        
+
         #back-button {
             background-color: #f44336;
             color: white;
             border: none;
             border-radius: 4px;
         }
-        
+
         #sensor-data {
             margin: 20px;
             padding: 10px;
@@ -64,61 +65,81 @@
             width: 600px;
             background-color: #f9f9f9;
         }
-        
+
         .sensor-value {
             font-weight: bold;
         }
-        
+
         #calibrate-button {
             background-color: #4CAF50;
             color: white;
             border: none;
             border-radius: 4px;
         }
-        
+
         #reset-button {
             background-color: #ff9800;
             color: white;
             border: none;
             border-radius: 4px;
         }
+
+        .item-point {
+            cursor: pointer;
+            box-shadow: 0 0 3px rgba(0, 0, 0, 0.5);
+        }
+
+        .item-point:hover::after {
+            content: attr(title);
+            position: absolute;
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 3px 6px;
+            border-radius: 3px;
+            font-size: 12px;
+            white-space: nowrap;
+            left: 12px;
+            top: -5px;
+            z-index: 20;
+        }
     </style>
 </head>
+
 <body>
     <h1>Smart Shopping Cart Map</h1>
     <div id="supermarket-map">
         <!-- Aisles will be added here -->
         <div id="user-dot"></div>
     </div>
-    
+
     <div id="controls">
         <button id="calibrate-button">Calibrar Sensores</button>
         <button id="reset-button">Reiniciar Posición</button>
         <button id="back-button">Volver al Carrito</button>
     </div>
-    
+
     <div id="sensor-data">
         <p>Estado: <span id="motion-status">No hay movimiento</span></p>
         <p>Pasos detectados: <span id="step-count" class="sensor-value">0</span></p>
         <p>Dirección: <span id="direction" class="sensor-value">N/A</span></p>
         <p>Posición: <span id="position-display" class="sensor-value">(0, 0)</span></p>
     </div>
-    
+
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
+        document.addEventListener('DOMContentLoaded', function () {
             // Map dimensions
             const mapWidth = 600;
             const mapHeight = 400;
-            
+
             // Motion detection settings
             const STEP_THRESHOLD = 1.2;     // Umbral para detectar un paso
             const MOTION_TIMEOUT = 300;     // Tiempo mínimo entre pasos en ms
             const COMPASS_SMOOTHING = 5;    // Cuántas lecturas de brújula promediar
-            
+
             // Load or initialize user position
             let userPosition = loadPosition() || { x: 30, y: 370 };
             const stepSize = 10;            // Cuánto avanza el usuario en el mapa por paso
-            
+
             // Sensor state variables
             let isCalibrated = false;
             let accelerationOffset = { x: 0, y: 0, z: 0 };
@@ -128,7 +149,7 @@
             let currentDirection = 0;       // 0 grados = norte
             let isMoving = false;
             let lastMotionTime = 0;
-            
+
             // Get DOM elements
             const userDot = document.getElementById('user-dot');
             const positionDisplay = document.getElementById('position-display');
@@ -139,10 +160,10 @@
             const calibrateButton = document.getElementById('calibrate-button');
             const resetButton = document.getElementById('reset-button');
             const backButton = document.getElementById('back-button');
-            
+
             // Array to store shelf boundaries for collision detection
             const obstacles = [];
-            
+
             // Create supermarket aisles (that will act as obstacles)
             function createAisles() {
                 // Horizontal aisles
@@ -156,7 +177,7 @@
                     aisle.style.left = leftPos + 'px';
                     aisle.style.top = topPos + 'px';
                     supermarketMap.appendChild(aisle);
-                    
+
                     // Store obstacle boundaries (x1, y1, x2, y2)
                     obstacles.push({
                         x1: leftPos,
@@ -166,59 +187,198 @@
                     });
                 }
             }
-            
+
+            function createItemPoints() {
+                // Leer la lista de la compra desde localStorage
+                const listaCompra = JSON.parse(localStorage.getItem('listaCompra')) || [];
+
+                // Leer las posiciones de los items (si existen)
+                const itemPositions = JSON.parse(localStorage.getItem('itemPositions')) || {};
+
+                // Eliminar puntos anteriores
+                const existingPoints = document.querySelectorAll('.item-point');
+                existingPoints.forEach(point => point.remove());
+
+                // Crear nuevas posiciones para items que no tienen una posición asignada
+                listaCompra.forEach(item => {
+                    if (!itemPositions[item]) {
+                        // Asignar una posición aleatoria en una estantería para el nuevo item
+                        const aisleIndex = Math.floor(Math.random() * obstacles.length);
+                        const aisle = obstacles[aisleIndex];
+
+                        // Generar posición aleatoria dentro de la estantería
+                        const x = Math.random() * (aisle.x2 - aisle.x1 - 10) + aisle.x1 + 5;
+                        const y = Math.random() * (aisle.y2 - aisle.y1 - 10) + aisle.y1 + 5;
+
+                        // Guardar la posición
+                        itemPositions[item] = { x, y };
+                    }
+                });
+
+                // Eliminar posiciones de items que ya no están en la lista
+                Object.keys(itemPositions).forEach(item => {
+                    if (!listaCompra.includes(item)) {
+                        delete itemPositions[item];
+                    }
+                });
+
+                // Guardar las posiciones actualizadas
+                localStorage.setItem('itemPositions', JSON.stringify(itemPositions));
+
+                // Crear puntos en el mapa para cada item
+                Object.entries(itemPositions).forEach(([item, position]) => {
+                    const point = document.createElement('div');
+                    point.className = 'item-point';
+                    point.style.position = 'absolute';
+                    point.style.width = '8px';
+                    point.style.height = '8px';
+                    point.style.backgroundColor = 'blue';
+                    point.style.borderRadius = '50%';
+                    point.style.left = `${position.x}px`;
+                    point.style.top = `${position.y}px`;
+                    point.style.zIndex = '10';
+
+                    // Añadir tooltip con el nombre del producto
+                    point.title = item;
+
+                    // Añadir el punto al mapa
+                    supermarketMap.appendChild(point);
+                });
+            }
+            function addToggleItemsButton() {
+                const toggleButton = document.createElement('button');
+                toggleButton.id = 'toggle-items-button';
+                toggleButton.textContent = 'Ocultar Productos';
+                toggleButton.style.backgroundColor = '#2196F3';
+                toggleButton.style.color = 'white';
+                toggleButton.style.border = 'none';
+                toggleButton.style.borderRadius = '4px';
+
+                const controlsDiv = document.getElementById('controls');
+                controlsDiv.appendChild(toggleButton);
+
+                let itemsVisible = true;
+                toggleButton.addEventListener('click', () => {
+                    const itemPoints = document.querySelectorAll('.item-point');
+                    if (itemsVisible) {
+                        itemPoints.forEach(point => point.style.display = 'none');
+                        toggleButton.textContent = 'Mostrar Productos';
+                        itemsVisible = false;
+                    } else {
+                        itemPoints.forEach(point => point.style.display = 'block');
+                        toggleButton.textContent = 'Ocultar Productos';
+                        itemsVisible = true;
+                    }
+                });
+            }
+
+            // Añadir esta función para actualizar los puntos cuando cambie la lista
+            function updateItemPoints() {
+                createItemPoints();
+            }
+
+            // Añadir listener para el evento de almacenamiento local
+            window.addEventListener('storage', (event) => {
+                if (event.key === 'listaCompra') {
+                    updateItemPoints();
+                }
+            });
             // Load position from localStorage
             function loadPosition() {
                 const savedPos = localStorage.getItem('cartPosition');
                 return savedPos ? JSON.parse(savedPos) : null;
             }
-            
+
             // Save position to localStorage
             function savePosition() {
                 localStorage.setItem('cartPosition', JSON.stringify(userPosition));
             }
-            
+
+            function highlightClosestItem() {
+                const itemPositions = JSON.parse(localStorage.getItem('itemPositions')) || {};
+                let closestDistance = Infinity;
+                let closestItem = null;
+
+                // Restablecer todos los puntos a azul
+                const itemPoints = document.querySelectorAll('.item-point');
+                itemPoints.forEach(point => {
+                    point.style.backgroundColor = 'blue';
+                    point.style.width = '8px';
+                    point.style.height = '8px';
+                });
+
+                // Encontrar el item más cercano
+                Object.entries(itemPositions).forEach(([item, position]) => {
+                    const distance = getDistanceToItem(position);
+                    if (distance < closestDistance) {
+                        closestDistance = distance;
+                        closestItem = item;
+                    }
+                });
+
+                // Destacar el item más cercano si está a menos de 50 pixeles
+                if (closestItem && closestDistance < 50) {
+                    const itemPoints = document.querySelectorAll('.item-point');
+                    itemPoints.forEach(point => {
+                        if (point.title === closestItem) {
+                            point.style.backgroundColor = 'green';
+                            point.style.width = '12px';
+                            point.style.height = '12px';
+
+                            // Mostrar notificación
+                            const notification = document.getElementById('notification');
+                            notification.textContent = `¡Producto cercano: ${closestItem}!`;
+                            notification.style.display = 'block';
+                            setTimeout(() => {
+                                notification.style.display = 'none';
+                            }, 3000);
+                        }
+                    });
+                }
+            }
+
             // Update user position on the map
             function updateUserPosition() {
                 userDot.style.transform = `translate(${userPosition.x - 7.5}px, ${userPosition.y - 7.5}px)`;
                 positionDisplay.textContent = `(${Math.round(userPosition.x)}, ${Math.round(userPosition.y)})`;
                 savePosition();
+                highlightClosestItem();
             }
-            
+
             // Check if a position would collide with any obstacle
             function isColliding(x, y) {
                 const dotRadius = 7.5; // Half of the dot's size
-                
+
                 for (const obstacle of obstacles) {
-                    if (x + dotRadius > obstacle.x1 && 
-                        x - dotRadius < obstacle.x2 && 
-                        y + dotRadius > obstacle.y1 && 
+                    if (x + dotRadius > obstacle.x1 &&
+                        x - dotRadius < obstacle.x2 &&
+                        y + dotRadius > obstacle.y1 &&
                         y - dotRadius < obstacle.y2) {
                         return true;
                     }
                 }
                 return false;
             }
-            
+
             // Move user on the map based on direction and steps
             function moveUser(direction) {
                 // Convert compass direction (in degrees) to radians
                 const radians = direction * (Math.PI / 180);
-                
+
                 // Calculate movement components
                 const dx = Math.sin(radians) * stepSize;
                 const dy = -Math.cos(radians) * stepSize; // y decreases as we go up
-                
+
                 const newX = userPosition.x + dx;
                 const newY = userPosition.y + dy;
-                
+
                 // Check map boundaries
                 if (newX < 10 || newX > mapWidth - 10 ||
                     newY < 10 || newY > mapHeight - 10) {
                     console.warn("🚧 Movimiento bloqueado por límite del mapa.");
                     return false;
                 }
-                
+
                 // Check for collisions with obstacles
                 if (!isColliding(newX, newY)) {
                     userPosition.x = newX;
@@ -230,7 +390,7 @@
                     return false;
                 }
             }
-            
+
             // Calibrate accelerometer by measuring the device at rest
             function calibrateAccelerometer() {
                 return new Promise((resolve, reject) => {
@@ -238,20 +398,20 @@
                         reject("DeviceMotionEvent no está soportado en este dispositivo");
                         return;
                     }
-                    
+
                     let readings = { x: 0, y: 0, z: 0 };
                     let readingCount = 0;
                     const totalReadings = 50;
-                    
+
                     motionStatusDisplay.textContent = "Calibrando...";
-                    
+
                     const handleMotion = (event) => {
                         if (readingCount < totalReadings) {
                             readings.x += event.accelerationIncludingGravity.x || 0;
                             readings.y += event.accelerationIncludingGravity.y || 0;
                             readings.z += event.accelerationIncludingGravity.z || 0;
                             readingCount++;
-                            
+
                             if (readingCount === totalReadings) {
                                 // Calculate average offset
                                 accelerationOffset = {
@@ -259,7 +419,7 @@
                                     y: readings.y / totalReadings,
                                     z: readings.z / totalReadings
                                 };
-                                
+
                                 window.removeEventListener('devicemotion', handleMotion);
                                 isCalibrated = true;
                                 motionStatusDisplay.textContent = "Calibrado completado";
@@ -267,9 +427,9 @@
                             }
                         }
                     };
-                    
+
                     window.addEventListener('devicemotion', handleMotion);
-                    
+
                     // Timeout in case calibration takes too long
                     setTimeout(() => {
                         if (readingCount < totalReadings) {
@@ -279,19 +439,19 @@
                     }, 5000);
                 });
             }
-            
+
             // Get string representation of direction
             function getDirectionString(degrees) {
                 const directions = ["Norte", "Noreste", "Este", "Sureste", "Sur", "Suroeste", "Oeste", "Noroeste"];
                 const index = Math.round(degrees / 45) % 8;
                 return directions[index];
             }
-            
+
             // Update direction in UI
             function updateDirectionDisplay(degrees) {
                 directionDisplay.textContent = `${Math.round(degrees)}° (${getDirectionString(degrees)})`;
             }
-            
+
             // Step detection algorithm
             function detectStep(acceleration) {
                 const now = Date.now();
@@ -300,7 +460,7 @@
                     Math.pow(acceleration.y - accelerationOffset.y, 2) +
                     Math.pow(acceleration.z - accelerationOffset.z, 2)
                 );
-                
+
                 // Update motion status
                 if (magnitude > 0.5) {
                     isMoving = true;
@@ -310,20 +470,20 @@
                     isMoving = false;
                     motionStatusDisplay.textContent = "Detenido";
                 }
-                
+
                 // Check if it's a step
                 if (magnitude > STEP_THRESHOLD && now - lastStepTime > MOTION_TIMEOUT) {
                     stepCount++;
                     stepCountDisplay.textContent = stepCount;
                     lastStepTime = now;
-                    
+
                     // Move user on the map
                     moveUser(currentDirection);
                     return true;
                 }
                 return false;
             }
-            
+
             // Request device motion and orientation permissions
             function requestSensorPermissions() {
                 if (typeof DeviceMotionEvent.requestPermission === 'function') {
@@ -353,47 +513,56 @@
                     setupMotionListeners();
                 }
             }
-            
+
             // Setup device motion and orientation event listeners
             function setupMotionListeners() {
                 // Listen for motion events (accelerometer)
                 window.addEventListener('devicemotion', (event) => {
                     if (!isCalibrated) return;
-                    
+
                     const acceleration = {
                         x: event.accelerationIncludingGravity.x || 0,
                         y: event.accelerationIncludingGravity.y || 0,
                         z: event.accelerationIncludingGravity.z || 0
                     };
-                    
+
                     detectStep(acceleration);
                 });
-                
+
                 // Listen for orientation events (compass)
                 window.addEventListener('deviceorientation', (event) => {
                     // Get compass heading (alpha) in degrees
                     let heading = event.alpha || 0;
-                    
+
                     // Add to readings array for smoothing
                     compassReadings.push(heading);
                     if (compassReadings.length > COMPASS_SMOOTHING) {
                         compassReadings.shift();
                     }
-                    
+
                     // Calculate average heading
                     const sum = compassReadings.reduce((a, b) => a + b, 0);
                     currentDirection = sum / compassReadings.length;
-                    
+
                     // Update UI
                     updateDirectionDisplay(currentDirection);
                 });
             }
-            
+
+            function getDistanceToItem(itemPosition) {
+                const dx = itemPosition.x - userPosition.x;
+                const dy = itemPosition.y - userPosition.y;
+                return Math.sqrt(dx * dx + dy * dy);
+            }
+
+
             // Initialize the map and sensors
             function init() {
                 createAisles();
+                createItemPoints();
+                addToggleItemsButton();
                 updateUserPosition();
-                
+
                 // Setup button event listeners
                 calibrateButton.addEventListener('click', () => {
                     calibrateAccelerometer()
@@ -404,40 +573,40 @@
                             alert("Error en calibración: " + error);
                         });
                 });
-                
+
                 resetButton.addEventListener('click', () => {
                     userPosition = { x: 30, y: 370 };
                     stepCount = 0;
                     stepCountDisplay.textContent = stepCount;
                     updateUserPosition();
                 });
-                
+
                 backButton.addEventListener('click', () => {
                     window.location.href = 'carrito.html';
                 });
-                
+
                 // Request permissions and setup sensors
                 requestSensorPermissions();
-                
+
                 // Add keyboard controls for testing (mainly for desktop)
                 document.addEventListener('keydown', (e) => {
-                    switch(e.key) {
-                        case 'ArrowLeft': 
+                    switch (e.key) {
+                        case 'ArrowLeft':
                             currentDirection = 270;
                             updateDirectionDisplay(currentDirection);
                             moveUser(currentDirection);
                             break;
-                        case 'ArrowRight': 
+                        case 'ArrowRight':
                             currentDirection = 90;
                             updateDirectionDisplay(currentDirection);
                             moveUser(currentDirection);
                             break;
-                        case 'ArrowUp': 
+                        case 'ArrowUp':
                             currentDirection = 0;
                             updateDirectionDisplay(currentDirection);
                             moveUser(currentDirection);
                             break;
-                        case 'ArrowDown': 
+                        case 'ArrowDown':
                             currentDirection = 180;
                             updateDirectionDisplay(currentDirection);
                             moveUser(currentDirection);
@@ -450,74 +619,12 @@
                     }
                 });
             }
-            
+
             init();
         });
 
-        function getGPSPosition() {
-    return new Promise((resolve, reject) => {
-        if (!navigator.geolocation) {
-            reject("GPS no soportado");
-        } else {
-            navigator.geolocation.getCurrentPosition(
-                pos => {
-                    resolve({
-                        lat: pos.coords.latitude,
-                        lng: pos.coords.longitude,
-                        timestamp: Date.now()
-                    });
-                },
-                err => reject("Error al obtener GPS: " + err.message),
-                { enableHighAccuracy: true, timeout: 5000 }
-            );
-        }
-    });
-}
-
-        // Calcular distancia entre dos coordenadas en metros (Haversine)
-        function distanciaHaversine(lat1, lon1, lat2, lon2) {
-            const R = 6371e3;
-            const toRad = deg => deg * Math.PI / 180;
-            const dLat = toRad(lat2 - lat1);
-            const dLon = toRad(lon2 - lon1);
-            const a = Math.sin(dLat/2)**2 + Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLon/2)**2;
-            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-            return R * c;
-        }
-
-        // Guardar posición GPS en localStorage
-        function saveGPSData(gpsData) {
-            localStorage.setItem('lastGPS', JSON.stringify(gpsData));
-        }
-
-        // Al iniciar: estimar movimiento desde último GPS
-        function aplicarCorreccionPorGPS() {
-            getGPSPosition().then(currentGPS => {
-                const lastGPSRaw = localStorage.getItem('lastGPS');
-                if (lastGPSRaw) {
-                    const lastGPS = JSON.parse(lastGPSRaw);
-                    const metros = distanciaHaversine(lastGPS.lat, lastGPS.lng, currentGPS.lat, currentGPS.lng);
-                    console.log(`Distancia recorrida con app cerrada: ${metros.toFixed(2)} m`);
-                    
-                    // Suponiendo 1 paso ≈ 0.8m y cada paso = 10px
-                    const pasosEstimados = Math.floor(metros / 0.8);
-                    
-                    for (let i = 0; i < pasosEstimados; i++) {
-                        moveUser(currentDirection); // Usamos la última dirección conocida
-                    }
-                    
-                    stepCount += pasosEstimados;
-                    stepCountDisplay.textContent = stepCount;
-                }
-
-                saveGPSData(currentGPS); // Guardar para la próxima
-            }).catch(err => {
-                console.warn("No se pudo aplicar corrección GPS:", err);
-            });
-        }
-
-        // Llamar al cargar
-        aplicarCorreccionPorGPS();
+        
     </script>
 </body>
+
 </html>
