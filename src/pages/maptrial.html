@@ -25,7 +25,7 @@
             background-color: red;
             border-radius: 50%;
             position: absolute;
-            transition: all 0.3s ease;
+            transition: transform 0.3s ease;
         }
         
         .aisle {
@@ -76,9 +76,10 @@
             // Map dimensions
             const mapWidth = 600;
             const mapHeight = 400;
-            
+            const MAX_STEPS = 5;
+
             // Configuración de movimiento por GPS
-            const GPS_SENSITIVITY = 0.00001; // 1 unidad de cambio en coordenadas ≈ 3 pasos
+            const GPS_SENSITIVITY = 0.00005; // 1 unidad de cambio en coordenadas ≈ 3 pasos
             const STEPS_PER_UNIT = 3; // Cuántos pasos de mapa equivale a 1 unidad de coordenada
             let lastCoords = null;
             
@@ -147,8 +148,7 @@
             
             // Update user position on the map
             function updateUserPosition() {
-                userDot.style.left = (userPosition.x - 7.5) + 'px';
-                userDot.style.top = (userPosition.y - 7.5) + 'px';
+                userDot.style.transform = `translate(${userPosition.x - 7.5}px, ${userPosition.y - 7.5}px)`;
                 positionDisplay.textContent = `(${Math.round(userPosition.x)}, ${Math.round(userPosition.y)})`;
                 savePosition();
             }
@@ -200,7 +200,8 @@
                 // Determinar dirección principal y calcular pasos
                 if (Math.abs(latDiff) > Math.abs(lonDiff)) {
                     // Movimiento vertical (norte/sur)
-                    const steps = Math.round(Math.abs(latDiff) / GPS_SENSITIVITY) * STEPS_PER_UNIT;
+                    const rawSteps = Math.round(Math.abs(latDiff) / GPS_SENSITIVITY) * STEPS_PER_UNIT;
+                    const steps = Math.min(rawSteps, MAX_STEPS);
                     const direction = latDiff > 0 ? -stepSize : stepSize; // Norte = arriba (y disminuye)
 
                     //alert(`⬆️ Movimiento vertical: ${steps} pasos hacia ${direction < 0 ? 'abajo' : 'arriba'}`);
