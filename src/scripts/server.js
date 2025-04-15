@@ -22,9 +22,9 @@ app.get("/", (req, res) => {
 
 const upload = multer({ dest: "uploads/" });
 
-const openai = new OpenAI({
+/*const openai = new OpenAI({
   apiKey: process.env.OPENAI_KEY,
-});
+});*/
 
 app.post("/predict", upload.single("image"), async (req, res) => {
   try {
@@ -85,9 +85,7 @@ io.on("connection", (socket) => {
   // Cuando en la interfaz del móvil se añada o retire un nuevo producto
   socket.on("móvil:actualizarListaCompra", (data) => {
     console.log("📜 Lista de compra actualizada:", data);
-    //listaCompra = data.items.sort((a, b) => a.localeCompare(b));
-    listaCompra = data;
-    console.log("Lista:", listaCompra);
+    listaCompra = data.sort((a, b) => a.localeCompare(b));
     io.emit("sincronizarListaCompra", { listaCompra });
   });
 
@@ -97,14 +95,16 @@ io.on("connection", (socket) => {
     const existeCarrito = carrito.some((p) => p.nombre === producto.nombre);
     if (!existeCarrito) {      
       carrito.push(producto);
+      console.log("carritoActual:", carrito);
       io.emit("sincronizarCarrito", carrito);
-      const existeLista = listaCompra.some(
-        (p) => p.toLowerCase().trim() === producto.nombre.toLowerCase().trim());
-      if(!existeLista) {
-        listaCompra.push(producto.nombre);
-        io.emit("sincronizarListaCompra", { listaCompra });
-      }
     }
+    const existeLista = listaCompra.some(
+      (p) => p.toLowerCase().trim() === producto.nombre.toLowerCase().trim());
+    if(!existeLista) {
+      listaCompra.push(producto.nombre);
+      console.log("listaCompraActual:", listaCompra);
+      io.emit("sincronizarListaCompra", { listaCompra });
+    }  
   });
 
   // Cuando en la interfaz del carrito se elimine un producto

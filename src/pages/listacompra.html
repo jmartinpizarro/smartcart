@@ -106,10 +106,6 @@
         const notification = document.getElementById('notification');
         let esCarrito = window.location.pathname.includes('carrito');
 
-        socket.on("sincronizarCarrito", (data) => {
-            console.log("🛒 Carrito actualizado:", data);
-        });
-
         socket.on("sincronizarListaCompra", (data) => {
             console.log("📜 Lista de compra actualizada:", data);
             const lista = document.getElementById("listaArticulos");
