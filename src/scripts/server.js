@@ -63,8 +63,11 @@ app.post("/predict", upload.single("image"), async (req, res) => {
 });
 
 app.get("/carrito", (req, res) => {
-  res.sendFile(path.join(PAGES_ROUTE, "carrito.html"));
+  res.sendFile(path.join(PAGES_ROUTE, "listacarrito.html"));
 });
+
+let listaCompra = [];
+let carrito = [];
 
 // Conexiones WebSocket
 // En server.js, modifica el manejo de mensajes así:
@@ -74,6 +77,43 @@ io.on("connection", (socket) => {
   // Variable para almacenar el último estado conocido
   let lastKnownList = null;
   
+  // Enviar los datos actuales cuando una interfaz se conecta
+  socket.on("solicitarDatos", () => {
+    socket.emit("sincronizarDatos", { listaCompra, carrito });
+  });
+
+  // Cuando en la interfaz del móvil se añada o retire un nuevo producto
+  socket.on("móvil:actualizarListaCompra", (data) => {
+    console.log("📜 Lista de compra actualizada:", data);
+    listaCompra = data.sort((a, b) => a.localeCompare(b));
+    io.emit("sincronizarListaCompra", { listaCompra });
+  });
+
+  // Cuando en la interfaz del carrito se añada un nuevo producto
+  socket.on("carrito:agregarProducto", (producto) => {
+    console.log("🛒 Producto añadido al carrito:", producto.nombre);
+    const existeCarrito = carrito.some((p) => p.nombre === producto.nombre);
+    if (!existeCarrito) {      
+      carrito.push(producto);
+      console.log("carritoActual:", carrito);
+      io.emit("sincronizarCarrito", carrito);
+    }
+    const existeLista = listaCompra.some(
+      (p) => p.toLowerCase().trim() === producto.nombre.toLowerCase().trim());
+    if(!existeLista) {
+      listaCompra.push(producto.nombre);
+      console.log("listaCompraActual:", listaCompra);
+      io.emit("sincronizarListaCompra", { listaCompra });
+    }  
+  });
+
+  // Cuando en la interfaz del carrito se elimine un producto
+  socket.on("carrito:eliminarProducto", (producto) => {
+    console.log("🗑 Producto eliminado del carrito:", producto);
+    carrito = carrito.filter((p) => p.nombre !== producto.nombre);
+    io.emit("sincronizarCarrito", { carrito });
+  });
+
   socket.on("cliente:mensaje", (data) => {
     console.log("📱 Mensaje del cliente:", data);
     

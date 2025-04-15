@@ -88,23 +88,40 @@
                     </div>
                 `;
                 cartContainer.appendChild(producto);
+                socket.emit("carrito:agregarProducto", item);
             });
             document.getElementById("total").innerText = total;
         }
 
         // Función para cambiar la cantidad de cada producto
         function updateQuantity(id, cambio) {
-            carrito = carrito.map(item => 
-                item.id === id ? { ...item, cantidad:  item.cantidad + cambio } : item
-            ).filter(item => item.cantidad > 0);    // Si la cantidad se vuelve 0 se elimina el producto
+            carrito = carrito.map(item => {
+                if (item.id === id) {
+                    const nuevaCantidad = item.cantidad + cambio;
+                    if (nuevaCantidad < 0) {
+                        removeItem(id);
+                        return null;
+                    }
+                    return { ...item, nuevaCantidad};
+                }
+                return item;
+            }).filter(item => item !== null);
             renderCart();
         }
 
         // Función para eliminar un producto
         function removeItem(id) {
-            carrito = carrito.filter(item => item.id !== id);
+            const item = carrito.find(item => item.id === id);
+            if (item) {
+                carrito = carrito.filter(item => item.id !== id);
+                socket.emit("carrito:eliminarProducto", item);
             renderCart();
+            }           
         }
+
+        socket.on("sincronizarCarrito", (data) => {
+            console.log("🛒 Carrito actualizado:", data);
+        });
 
         /*
         function activarMicrofonoCarro() {
