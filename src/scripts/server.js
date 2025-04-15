@@ -22,9 +22,9 @@ app.get("/", (req, res) => {
 
 const upload = multer({ dest: "uploads/" });
 
-/*const openai = new OpenAI({
+const openai = new OpenAI({
   apiKey: process.env.OPENAI_KEY,
-});*/
+});
 
 app.post("/predict", upload.single("image"), async (req, res) => {
   try {
