@@ -102,7 +102,7 @@
     <script>
         const socket = io();
         // Solicitar los datos cuando se levanta la interfaz del movil
-        socket.emit("solicitarDatos");
+        socket.emit("solicitarDatosListaCompra");
         const notification = document.getElementById('notification');
         let esCarrito = window.location.pathname.includes('carrito');
 
@@ -166,6 +166,14 @@
 
             //cargarLista();
         }
+
+        // Añadir artículo a la lista solo pulsando enter
+        const input = document.getElementById("nuevoArticulo");
+        input.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') {
+                agregarArticulo();
+            }
+        });
 
         // Función para añadir un artículo a la lista
         function agregarArticulo() {

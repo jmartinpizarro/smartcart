@@ -66,6 +66,13 @@ app.get("/carrito", (req, res) => {
   res.sendFile(path.join(PAGES_ROUTE, "listacarrito.html"));
 });
 
+// Base de datos con todos los productos disponibles del supermercado
+const productosDisponibles = [
+  { id: 1, nombre: 'Manzanas', precio: 2.5 },
+  { id: 2, nombre: 'Plátanos', precio: 1.2 },
+  { id: 3, nombre: 'Undefined', precio: 1.5 }   // Solo para probar el modelo
+];
+
 let listaCompra = [];
 let carrito = [];
 
@@ -77,9 +84,14 @@ io.on("connection", (socket) => {
   // Variable para almacenar el último estado conocido
   let lastKnownList = null;
   
-  // Enviar los datos actuales cuando una interfaz se conecta
-  socket.on("solicitarDatos", () => {
-    socket.emit("sincronizarDatos", { listaCompra, carrito });
+  // Enviar los datos actuales cuando la interfaz del movil se conecta
+  socket.on("solicitarDatosListaCompra", () => {
+    socket.emit("sincronizarListaCompra", { listaCompra });
+  });
+
+  // Enviar los datos actuales cuando la interfaz del carrito se conecta
+  socket.on("solicitarDatosCarrito", () => {
+    socket.emit("sincronizarCarrito", { carrito });
   });
 
   // Cuando en la interfaz del móvil se añada o retire un nuevo producto
@@ -87,6 +99,27 @@ io.on("connection", (socket) => {
     console.log("📜 Lista de compra actualizada:", data);
     listaCompra = data.sort((a, b) => a.localeCompare(b));
     io.emit("sincronizarListaCompra", { listaCompra });
+  });
+
+  // Cuando en la interfaz de la camara se añada un nuevo producto
+  socket.on("camara:agregarProducto", (nombreProducto) => {
+    console.log("📷 Producto añadido al carrito:", nombreProducto);
+    const existeCarrito = carrito.some((p) => p.nombre === nombreProducto);
+    if (!existeCarrito) {
+      const producto = productosDisponibles.find(p => p.nombre === nombreProducto);  
+      if (producto) {
+        carrito.push(producto);
+        console.log("carritoActual:", carrito);
+        io.emit("sincronizarCarrito", carrito);
+      }    
+    }
+    const existeLista = listaCompra.some(
+      (p) => p.toLowerCase().trim() === nombreProducto.toLowerCase().trim());
+    if(!existeLista) {
+      listaCompra.push(nombreProducto);
+      console.log("listaCompraActual:", listaCompra);
+      io.emit("sincronizarListaCompra", { listaCompra });
+    }
   });
 
   // Cuando en la interfaz del carrito se añada un nuevo producto
