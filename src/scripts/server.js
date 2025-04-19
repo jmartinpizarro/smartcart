@@ -216,7 +216,6 @@ io.on("connection", (socket) => {
     
 });
 
-});
 // Exportar para Vercel (si es necesario)
 module.exports = app;
 
