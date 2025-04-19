@@ -57,7 +57,7 @@
         <div class="d-grid gap-3">
             <button class="btn btn-primary btn-custom" onclick="escanearArticulo()">Escanear artículo</button>
             <button class="btn btn-primary btn-custom" onclick="verListaCompra()">Lista de la compra</button>
-            <button class="btn btn-primary btn-custom" onclick="abrirAjustes()">Ajustes</button>
+            <button class="btn btn-primary btn-custom" onclick="abrirMapa()">Mapa</button>
         </div>
     </div>
 
@@ -91,28 +91,30 @@
         });
 
         // Funciones para las acciones
+        // Dentro del <script> de interfazmovil.html, modifica las funciones:
+
         function escanearArticulo() {
-            socket.emit("cliente:mensaje", {
-                tipo: "escanear",
-                mensaje: "Preparando escáner de código de barras"
+            socket.emit("cliente:accion", {
+                tipo: "redireccion",
+                pagina: "camara"
             });
             window.location.href = './camara.html';
         }
 
         function verListaCompra() {
-            socket.emit("cliente:mensaje", {
-                tipo: "lista-compra",
-                mensaje: "Solicitando lista de compra actual"
+            socket.emit("cliente:accion", {
+                tipo: "redireccion", 
+                pagina: "listacompra"
             });
             window.location.href = "./listacompra.html";
         }
 
-        function abrirAjustes() {
-            socket.emit("cliente:mensaje", {
-                tipo: "ajustes",
-                mensaje: "Abriendo configuración"
+        function abrirMapa() {
+            socket.emit("cliente:accion", {
+                tipo: "redireccion",
+                pagina: "mapa"
             });
-            showNotification("Abriendo ajustes...");
+            window.location.href = "./mapgiros.html";
         }
 
         // Control por voz
@@ -139,8 +141,8 @@
                     escanearArticulo();
                 } else if (transcript.includes("lista")) {
                     verListaCompra();
-                } else if (transcript.includes("ajustes")) {
-                    abrirAjustes();
+                } else if (transcript.includes("mapa")) {
+                    abrirMapa();
                 } else {
                     showNotification("Comando no reconocido");
                 }

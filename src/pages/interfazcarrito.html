@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SmartCart - Móvil</title>
+    <title>SmartCart - Carrito</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
         body {
@@ -19,18 +19,6 @@
             align-items: center;
             justify-content: center;
             border-radius: 10px;
-        }
-        .btn-mic {
-            position: fixed;
-            bottom: 20px;
-            right: 20px;
-            width: 60px;
-            height: 60px;
-            border-radius: 50%;
-            font-size: 24px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
         }
         .notification {
             position: fixed;
@@ -48,24 +36,34 @@
 </head>
 <body>
     <div class="container">
-        <h1 class="text-center mb-4">¡Bienvenido a SmartCart!</h1>
-
-        <!-- Notificación -->
+        <h1 class="text-center mb-4">SmartCart - Carrito</h1>
         <div class="notification" id="notification"></div>
-
-        <!-- Botones grandes en vertical -->
-        <div class="d-grid gap-3">
-            <button class="btn btn-primary btn-custom" onclick="escanearArticulo()">Escanear artículo</button>
-            <button class="btn btn-primary btn-custom" onclick="verListaCompra()">Lista de la compra</button>
-            <button class="btn btn-primary btn-custom" onclick="abrirAjustes()">Ajustes</button>
-        </div>
     </div>
 
-    <!-- Botón de micrófono -->
-    <button class="btn btn-primary btn-mic" onclick="activarMicrofono()">🎤</button>
-
-    <!-- Socket.io -->
     <script src="/socket.io/socket.io.js"></script>
+    <script>
+        const socket = io();
+        const notification = document.getElementById('notification');
 
+        function showNotification(message) {
+            notification.textContent = message;
+            notification.style.display = 'block';
+            setTimeout(() => {
+                notification.style.display = 'none';
+            }, 3000);
+        }
+
+        // Escuchar acciones del móvil
+        socket.on("servidor:redireccion", (data) => {
+            console.log("Redireccionando a:", data.pagina + "carrito.html");
+            showNotification(`Sincronizado con móvil: ${data.pagina}`);
+            window.location.href = data.pagina + "carrito.html";
+        });
+
+        
+        socket.on("cliente:mensaje", (data) => {
+            showNotification(`Móvil: ${data.mensaje}`);
+        });
+    </script>
 </body>
 </html>

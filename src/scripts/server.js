@@ -199,6 +199,16 @@ io.on("connection", (socket) => {
     io.emit('mapa:actualizacion', { items });
   });
 
+  socket.on("cliente:accion", (data) => {
+      console.log(`Acción recibida de cliente: ${data.tipo} - ${data.pagina}`);
+      
+      if(data.tipo === "redireccion") {
+          // Enviar a todos los clientes carrito
+          io.emit("servidor:redireccion", {
+              pagina: data.pagina
+          });
+      }
+  });
 
 });
 // Exportar para Vercel (si es necesario)
