@@ -42,18 +42,5 @@
   <div class="container">
     <h1 class="text-center mb-4">Escaneando artículo...</h1>
   <script src="/socket.io/socket.io.js"></script>
-  <script>
-    const socket = io();
-
-    // Identifica este cliente como "ordenador" al conectarse
-    socket.emit("identificar", { tipo: "ordenador" });
-
-    // Escucha la orden de redirección
-    socket.on("servidor:volver-menu", (data) => {
-            console.log("Redirigiendo ordenador al menú");
-            window.location.href = "/interfazcarrito.html";
-        });
-        
-  </script>
 </body>
 </html>

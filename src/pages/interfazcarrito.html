@@ -43,14 +43,39 @@
     <script src="/socket.io/socket.io.js"></script>
     <script>
         const socket = io();
+        const notification = document.getElementById('notification');
 
-        // Identifica este cliente como "ordenador" al conectarse
-        socket.emit("identificar", { tipo: "ordenador" });
+        function showNotification(message) {
+            notification.textContent = message;
+            notification.style.display = 'block';
+            setTimeout(() => {
+                notification.style.display = 'none';
+            }, 3000);
+        }
 
-        // Escucha la orden de redirección
-        socket.on("servidor:redirigir-ordenador", (data) => {
-            console.log("Redirigiendo ordenador a:", data.pagina);
-            window.location.href = data.pagina;
+        // Escuchar acciones del móvil
+        socket.on("servidor:redireccion", (data) => {
+            if(data.tipo === "volver-menu") {
+                if(window.location.pathname.split('/').pop() !== 'interfazcarrito.html') {
+                    showNotification("Volviendo al menú...");
+                    window.location.href = "interfazcarrito.html";
+                }
+                return;
+            }
+
+            // En caso de redirección general
+            if (data.pagina) {
+                const nuevaPagina = data.pagina + "carrito.html";
+                if (window.location.pathname.split('/').pop() !== nuevaPagina) {
+                    showNotification(`Sincronizado con móvil: ${data.pagina}`);
+                    window.location.href = nuevaPagina;
+                }
+            }
+        });
+
+
+        socket.on("cliente:mensaje", (data) => {
+            showNotification(`Móvil: ${data.mensaje}`);
         });
     </script>
 </body>

@@ -145,13 +145,6 @@
       setTimeout(() => location.reload(), 2000);
     });
 
-    socket.emit("identificar", { tipo: "ordenador" });
-
-    socket.on("servidor:volver-menu", (data) => {
-            console.log("Redirigiendo ordenador al menú");
-            window.location.href = "/interfazcarrito.html";
-        });
-
     // Inicializar
     document.addEventListener("DOMContentLoaded", () => {
       renderCarrito([]);
