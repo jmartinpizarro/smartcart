@@ -145,6 +145,16 @@
       setTimeout(() => location.reload(), 2000);
     });
 
+    socket.on("servidor:redireccion", (data) => {
+            if(data.tipo === "volver-menu") {
+              const nuevaPagina = data.pagina + "carrito.html";
+                if (window.location.pathname.split('/').pop() !== nuevaPagina) {
+                    showNotification(`Sincronizado con móvil: ${data.pagina}`);
+                    window.location.href = nuevaPagina;
+                }
+            }
+        });
+    
     // Inicializar
     document.addEventListener("DOMContentLoaded", () => {
       renderCarrito([]);

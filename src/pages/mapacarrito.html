@@ -192,6 +192,16 @@
             }
         });
 
+        socket.on("servidor:redireccion", (data) => {
+            if(data.tipo === "volver-menu") {
+              const nuevaPagina = data.pagina + "carrito.html";
+                if (window.location.pathname.split('/').pop() !== nuevaPagina) {
+                    showNotification(`Sincronizado con móvil: ${data.pagina}`);
+                    window.location.href = nuevaPagina;
+                }
+            }
+        });
+
         // Solicitar estado inicial al conectar
         socket.on('connect', () => {
             socket.emit('mapa:solicitarEstado');
