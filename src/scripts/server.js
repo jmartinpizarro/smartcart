@@ -204,7 +204,7 @@ io.on("connection", (socket) => {
       if(data.tipo === "volver-menu") {
         io.emit("servidor:redireccion", {
             tipo: "volver-menu",
-            origen: data.origen
+            pagina: "interfaz"
         });
     }
       if(data.tipo === "redireccion") {

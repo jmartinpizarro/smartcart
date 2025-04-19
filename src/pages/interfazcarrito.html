@@ -57,13 +57,20 @@
         socket.on("servidor:redireccion", (data) => {
             if(data.tipo === "volver-menu") {
                 if(window.location.pathname.split('/').pop() !== 'interfazcarrito.html') {
-                    showNotification("Sincronizando con móvil...");
+                    showNotification("Volviendo al menú...");
                     window.location.href = "interfazcarrito.html";
                 }
+                return;
             }
-            console.log("Redireccionando a:", data.pagina + "carrito.html");
-            showNotification(`Sincronizado con móvil: ${data.pagina}`);
-            window.location.href = data.pagina + "carrito.html";
+
+            // En caso de redirección general
+            if (data.pagina) {
+                const nuevaPagina = data.pagina + "carrito.html";
+                if (window.location.pathname.split('/').pop() !== nuevaPagina) {
+                    showNotification(`Sincronizado con móvil: ${data.pagina}`);
+                    window.location.href = nuevaPagina;
+                }
+            }
         });
 
 
