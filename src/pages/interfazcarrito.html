@@ -72,8 +72,9 @@
                 }
             }
         });
-
-
+        socket.on("connect", () => {
+            alert("Conectado al servidor");
+        });
         socket.on("cliente:mensaje", (data) => {
             showNotification(`Móvil: ${data.mensaje}`);
         });

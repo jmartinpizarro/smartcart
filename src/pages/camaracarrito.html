@@ -43,14 +43,27 @@
     <h1 class="text-center mb-4">Escaneando artículo...</h1>
   <script src="/socket.io/socket.io.js"></script>
   <script>
+    document.addEventListener("DOMContentLoaded", () => {
+
     const socket = io();
+    alert ("Servidor cargado");
     socket.on("servidor:volver-menu", (data) => {
-              const nuevaPagina = data.pagina + "carrito.html";
-                if (window.location.pathname.split('/').pop() !== nuevaPagina) {
-                    showNotification(`Sincronizado con móvil: ${data.pagina}`);
-                    window.location.href = nuevaPagina;
-            }
-        });
+      alert("Volviendo al menú...");
+      const nuevaPagina = data.pagina + "carrito.html";
+      if (window.location.pathname.split('/').pop() !== nuevaPagina) {
+        console.log(`📲 Recibido 'volver-menu': redirigiendo a ${nuevaPagina}`);
+        window.location.href = nuevaPagina;
+      }
+    });
+
+    socket.on("connect", () => {
+      alert("Conectado al servidor WebSocket");
+    });
+
+    socket.on("connect_error", (err) => {
+      alert("Error al conectar con WebSocket: " + err.message);
+    });
+  });
   </script>
 </body>
 </html>
