@@ -200,20 +200,21 @@ io.on("connection", (socket) => {
   });
 
   socket.on("cliente:accion", (data) => {
-      console.log(`Acción recibida de cliente: ${data.tipo} - ${data.pagina}`);
-      if(data.tipo === "volver-menu") {
-        io.emit("servidor:redireccion", {
-            tipo: "volver-menu",
-            pagina: "interfaz"
-        });
-    }
-      if(data.tipo === "redireccion") {
-          // Enviar a todos los clientes carrito
+      if (data.tipo === "volver-menu") {
+          // Determinar el dispositivo destino
+          const targetDevice = data.dispositivo === "movil" ? "carrito" : "movil";
+          
           io.emit("servidor:redireccion", {
-              pagina: data.pagina
+              tipo: "volver-menu",
+              dispositivo: targetDevice,
+              origen: data.origen || 'desconocido'
           });
+          
+          console.log(`Sincronización: ${data.dispositivo} -> ${targetDevice}`);
       }
   });
+    
+});
 
 // Exportar para Vercel (si es necesario)
 module.exports = app;
