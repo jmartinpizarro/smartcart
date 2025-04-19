@@ -75,7 +75,8 @@ const productosDisponibles = [
 
 let listaCompra = [];
 let carrito = [];
-
+let lastKnownPosition = { x: 30, y: 370 };
+let lastKnownItems = {};
 // Conexiones WebSocket
 // En server.js, modifica el manejo de mensajes así:
 io.on("connection", (socket) => {
@@ -180,6 +181,25 @@ io.on("connection", (socket) => {
   socket.on("disconnect", () => {
     console.log("❌ Cliente desconectado:", socket.id);
   });
+
+  socket.on('mapa:solicitarEstado', () => {
+    socket.emit('mapa:actualizacion', {
+        position: lastKnownPosition || { x: 30, y: 370 },
+        items: lastKnownItems || {}
+    });
+  });
+
+  socket.on('mapa:actualizarPosicion', (position) => {
+    lastKnownPosition = position;
+    io.emit('mapa:actualizacion', { position });
+  });
+
+  socket.on('mapa:actualizarItems', (items) => {
+    lastKnownItems = items;
+    io.emit('mapa:actualizacion', { items });
+  });
+
+
 });
 // Exportar para Vercel (si es necesario)
 module.exports = app;

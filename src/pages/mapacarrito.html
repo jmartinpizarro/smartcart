@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <title>Mapa del Carrito</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f0f8ff;
+        }
+        #supermarket-map {
+            width: 100vw;
+            height: 100vh;
+            position: relative;
+            overflow: hidden;
+        }
+        #user-dot {
+            width: 15px;
+            height: 15px;
+            background-color: red;
+            border-radius: 50%;
+            position: absolute;
+            transition: transform 0.3s ease;
+            z-index: 10;
+        }
+        .aisle {
+            position: absolute;
+            background-color: #fff;
+            border: 1px solid #ccc;
+        }
+        .item-point {
+            position: absolute;
+            width: 8px;
+            height: 8px;
+            background-color: blue;
+            border-radius: 50%;
+            z-index: 5;
+            box-shadow: 0 0 3px rgba(0, 0, 0, 0.5);
+        }
+        .item-point.highlighted {
+            background-color: green;
+            width: 12px;
+            height: 12px;
+        }
+        #notification {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0,0,0,0.7);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 5px;
+            z-index: 100;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div id="supermarket-map">
+        <!-- Aisles will be added here -->
+        <div id="user-dot"></div>
+        <!-- Item points will be added here -->
+    </div>
+    <div id="notification"></div>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        const socket = io();
+        const supermarketMap = document.getElementById('supermarket-map');
+        const userDot = document.getElementById('user-dot');
+        const notification = document.getElementById('notification');
+
+        // Variables de estado
+        let userPosition = { x: 30, y: 370 };
+        let obstacles = [];
+        let itemPositions = {};
+
+        // Dimensiones del mapa (deben coincidir con mapgiros.html)
+        const mapWidth = 600;
+        const mapHeight = 400;
+
+        // Escalar el mapa al tamaño de la ventana
+        function scaleMap() {
+            const scaleX = window.innerWidth / mapWidth;
+            const scaleY = window.innerHeight / mapHeight;
+            const scale = Math.min(scaleX, scaleY);
+            
+            supermarketMap.style.transform = `scale(${scale})`;
+            supermarketMap.style.transformOrigin = 'top left';
+        }
+
+        // Crear pasillos (debe coincidir con mapgiros.html)
+        function createAisles() {
+            // Horizontal aisles
+            for (let i = 0; i < 3; i++) {
+                const aisle = document.createElement('div');
+                aisle.className = 'aisle';
+                aisle.style.width = '480px';
+                aisle.style.height = '30px';
+                const leftPos = 60;
+                const topPos = 100 + i * 100;
+                aisle.style.left = leftPos + 'px';
+                aisle.style.top = topPos + 'px';
+                supermarketMap.appendChild(aisle);
+
+                // Store obstacle boundaries
+                obstacles.push({
+                    x1: leftPos,
+                    y1: topPos,
+                    x2: leftPos + 480,
+                    y2: topPos + 30
+                });
+            }
+        }
+
+        // Actualizar posición del usuario
+        function updateUserPosition(position) {
+            userPosition = position;
+            userDot.style.transform = `translate(${position.x - 7.5}px, ${position.y - 7.5}px)`;
+            highlightClosestItem();
+        }
+
+        // Resaltar el item más cercano
+        function highlightClosestItem() {
+            let closestDistance = Infinity;
+            let closestItem = null;
+
+            // Resetear todos los puntos
+            document.querySelectorAll('.item-point').forEach(point => {
+                point.classList.remove('highlighted');
+            });
+
+            // Encontrar el más cercano
+            Object.entries(itemPositions).forEach(([item, position]) => {
+                const dx = position.x - userPosition.x;
+                const dy = position.y - userPosition.y;
+                const distance = Math.sqrt(dx * dx + dy * dy);
+                
+                if (distance < closestDistance) {
+                    closestDistance = distance;
+                    closestItem = item;
+                }
+            });
+
+            // Resaltar si está cerca
+            if (closestItem && closestDistance < 50) {
+                const points = document.querySelectorAll('.item-point');
+                points.forEach(point => {
+                    if (point.title === closestItem) {
+                        point.classList.add('highlighted');
+                        
+                        // Mostrar notificación
+                        notification.textContent = `¡Producto cercano: ${closestItem}!`;
+                        notification.style.display = 'block';
+                        setTimeout(() => {
+                            notification.style.display = 'none';
+                        }, 3000);
+                    }
+                });
+            }
+        }
+
+        // Actualizar items en el mapa
+        function updateItems(items) {
+            itemPositions = items;
+            
+            // Limpiar puntos anteriores
+            document.querySelectorAll('.item-point').forEach(point => point.remove());
+            
+            // Crear nuevos puntos
+            Object.entries(items).forEach(([item, position]) => {
+                const point = document.createElement('div');
+                point.className = 'item-point';
+                point.style.left = `${position.x}px`;
+                point.style.top = `${position.y}px`;
+                point.title = item;
+                supermarketMap.appendChild(point);
+            });
+            
+            highlightClosestItem();
+        }
+
+        // Escuchar actualizaciones del mapa principal
+        socket.on('mapa:actualizacion', (data) => {
+            if (data.position) {
+                updateUserPosition(data.position);
+            }
+            if (data.items) {
+                updateItems(data.items);
+            }
+        });
+
+        // Solicitar estado inicial al conectar
+        socket.on('connect', () => {
+            socket.emit('mapa:solicitarEstado');
+        });
+
+        // Inicializar
+        window.addEventListener('load', () => {
+            createAisles();
+            scaleMap();
+            updateUserPosition(userPosition);
+        });
+
+        window.addEventListener('resize', scaleMap);
+    </script>
+</body>
+</html>
