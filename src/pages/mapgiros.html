@@ -150,6 +150,9 @@
             let isMoving = false;
             let lastMotionTime = 0;
 
+            let lastSentPosition = null;
+            let lastSentItems = null;
+
             // Get DOM elements
             const userDot = document.getElementById('user-dot');
             const positionDisplay = document.getElementById('position-display');
@@ -244,6 +247,12 @@
                     // Añadir el punto al mapa
                     supermarketMap.appendChild(point);
                 });
+
+                const currentItems = JSON.parse(localStorage.getItem('itemPositions')) || {};
+                if (JSON.stringify(lastSentItems) !== JSON.stringify(currentItems)) {
+                    socket.emit('mapa:actualizarItems', currentItems);
+                    lastSentItems = {...currentItems};
+                }
             }
             function addToggleItemsButton() {
                 const toggleButton = document.createElement('button');
@@ -343,6 +352,13 @@
                 positionDisplay.textContent = `(${Math.round(userPosition.x)}, ${Math.round(userPosition.y)})`;
                 savePosition();
                 highlightClosestItem();
+                if (!lastSentPosition || 
+                    Math.abs(lastSentPosition.x - userPosition.x) > 2 || 
+                    Math.abs(lastSentPosition.y - userPosition.y) > 2) {
+                    
+                    socket.emit('mapa:actualizarPosicion', userPosition);
+                    lastSentPosition = {...userPosition};
+                }
             }
 
             // Check if a position would collide with any obstacle
@@ -618,8 +634,17 @@
                             break;
                     }
                 });
-            }
 
+                const socket = io();
+
+                // Enviar estado inicial
+                socket.on('connect', () => {
+                    const initialItems = JSON.parse(localStorage.getItem('itemPositions')) || {};
+                    socket.emit('mapa:actualizarItems', initialItems);
+                    socket.emit('mapa:actualizarPosicion', userPosition);
+                });
+            }
+            
             init();
         });
 
