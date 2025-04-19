@@ -44,13 +44,11 @@
   <script src="/socket.io/socket.io.js"></script>
   <script>
     const socket = io();
-    socket.on("servidor:redireccion", (data) => {
-            if(data.tipo === "volver-menu") {
+    socket.on("servidor:volver-menu", (data) => {
               const nuevaPagina = data.pagina + "carrito.html";
                 if (window.location.pathname.split('/').pop() !== nuevaPagina) {
                     showNotification(`Sincronizado con móvil: ${data.pagina}`);
                     window.location.href = nuevaPagina;
-                }
             }
         });
   </script>
