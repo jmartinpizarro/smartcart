@@ -103,6 +103,7 @@
             z-index: 20;
         }
     </style>
+    <script src="/socket.io/socket.io.js"></script>
 </head>
 
 <body>
@@ -635,16 +636,13 @@
                     }
                 });
 
-                const socket = io();
-
-                // Enviar estado inicial
-                socket.on('connect', () => {
-                    const initialItems = JSON.parse(localStorage.getItem('itemPositions')) || {};
-                    socket.emit('mapa:actualizarItems', initialItems);
-                    socket.emit('mapa:actualizarPosicion', userPosition);
-                });
             }
-            
+            socket.on('connect', () => {
+                console.log('Conectado al servidor Socket.IO');
+                const initialItems = JSON.parse(localStorage.getItem('itemPositions')) || {};
+                socket.emit('mapa:actualizarItems', initialItems);
+                socket.emit('mapa:actualizarPosicion', userPosition);
+            });
             init();
         });
 
