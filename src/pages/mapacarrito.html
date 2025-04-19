@@ -67,7 +67,8 @@
 
     <script src="/socket.io/socket.io.js"></script>
     <script>
-        const socket = io();
+        document.addEventListener("DOMContentLoaded", () => {
+            const socket = io();
         const supermarketMap = document.getElementById('supermarket-map');
         const userDot = document.getElementById('user-dot');
         const notification = document.getElementById('notification');
@@ -193,10 +194,11 @@
         });
 
         socket.on("servidor:volver-menu", (data) => {
-              const nuevaPagina = data.pagina + "carrito.html";
-                if (window.location.pathname.split('/').pop() !== nuevaPagina) {
-                    showNotification(`Sincronizado con móvil: ${data.pagina}`);
-                    window.location.href = nuevaPagina;
+            alert("Volviendo al menú...");
+            const nuevaPagina = data.pagina + "carrito.html";
+            if (window.location.pathname.split('/').pop() !== nuevaPagina) {
+                console.log(`Recibido 'volver-menu': redirigiendo a ${nuevaPagina}`);
+                window.location.href = nuevaPagina;
             }
         });
 
@@ -213,6 +215,9 @@
         });
 
         window.addEventListener('resize', scaleMap);
+
+        });
+
     </script>
 </body>
 </html>

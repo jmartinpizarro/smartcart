@@ -58,103 +58,104 @@
 
   <script src="/socket.io/socket.io.js"></script>
   <script>
-    const socket = io();
-    const listaCarrito = document.getElementById("listaCarrito");
-    const totalCompra = document.getElementById("totalCompra");
-    const listaCompraContainer = document.getElementById("listaCompraContainer");
 
-    // Base de datos de productos disponibles (debe coincidir con el servidor)
-    const productosDisponibles = [
-      { id: 1, nombre: 'Manzanas', precio: 2.5 },
-      { id: 2, nombre: 'Plátanos', precio: 1.2 },
-      { id: 3, nombre: 'Leche', precio: 1.5 },
-      { id: 4, nombre: 'Pan', precio: 0.8 },
-      { id: 5, nombre: 'Huevos', precio: 2.3 }
-    ];
-
-    // Función para renderizar el carrito
-    function renderCarrito(carrito) {
-      listaCarrito.innerHTML = "";
-      let total = 0;
-
-      carrito.forEach(producto => {
-        const div = document.createElement("div");
-        div.classList.add("producto");
-        div.innerHTML = `
-          <span>${producto.nombre}</span>
-          <span>${producto.precio.toFixed(2)} €</span>
-        `;
-        listaCarrito.appendChild(div);
-        total += producto.precio;
-      });
-
-      totalCompra.textContent = `Total: ${total.toFixed(2)} €`;
-    }
-
-    // Función para renderizar la lista de compra
-    function renderListaCompra(lista) {
-      listaCompraContainer.innerHTML = "";
-      
-      lista.forEach(item => {
-        const div = document.createElement("div");
-        div.classList.add("lista-item");
-        div.textContent = item;
-        listaCompraContainer.appendChild(div);
-      });
-    }
-
-    // Convertir items de lista a productos del carrito
-    function convertirListaACarrito(itemsLista) {
-      return itemsLista
-        .map(nombre => 
-          productosDisponibles.find(p => 
-            p.nombre.toLowerCase() === nombre.toLowerCase()
-          )
-        )
-        .filter(p => p); // Eliminar undefined
-    }
-
-    // Escuchar actualizaciones del carrito
-    socket.on("sincronizarCarrito", (data) => {
-      const carritoActual = Array.isArray(data) ? data : data.carrito || [];
-      renderCarrito(carritoActual);
-    });
-
-    // Escuchar actualizaciones de la lista de compra
-    socket.on("sincronizarListaCompra", (data) => {
-      const listaActual = data.listaCompra || [];
-      renderListaCompra(listaActual);
-      
-      // Opcional: Añadir automáticamente al carrito
-      const nuevosProductos = convertirListaACarrito(listaActual);
-      if (nuevosProductos.length > 0) {
-        socket.emit("carrito:agregarProductos", nuevosProductos);
-      }
-    });
-
-    // Solicitar datos al conectar
-    socket.on("connect", () => {
-      socket.emit("solicitarDatosCarrito");
-      socket.emit("solicitarDatosListaCompra");
-    });
-
-    // Manejar errores de conexión
-    socket.on("connect_error", (err) => {
-      console.error("Error de conexión:", err);
-      alert("Error al conectar con el servidor. Recargando...");
-      setTimeout(() => location.reload(), 2000);
-    });
-
-    socket.on("servidor:volver-menu", (data) => {
-              const nuevaPagina = data.pagina + "carrito.html";
-                if (window.location.pathname.split('/').pop() !== nuevaPagina) {
-                    showNotification(`Sincronizado con móvil: ${data.pagina}`);
-                    window.location.href = nuevaPagina;
-            }
-        });
-    
-    // Inicializar
     document.addEventListener("DOMContentLoaded", () => {
+      const socket = io();
+      const listaCarrito = document.getElementById("listaCarrito");
+      const totalCompra = document.getElementById("totalCompra");
+      const listaCompraContainer = document.getElementById("listaCompraContainer");
+
+      // Base de datos de productos disponibles (debe coincidir con el servidor)
+      const productosDisponibles = [
+        { id: 1, nombre: 'Manzanas', precio: 2.5 },
+        { id: 2, nombre: 'Plátanos', precio: 1.2 },
+        { id: 3, nombre: 'Leche', precio: 1.5 },
+        { id: 4, nombre: 'Pan', precio: 0.8 },
+        { id: 5, nombre: 'Huevos', precio: 2.3 }
+      ];
+
+      // Función para renderizar el carrito
+      function renderCarrito(carrito) {
+        listaCarrito.innerHTML = "";
+        let total = 0;
+
+        carrito.forEach(producto => {
+          const div = document.createElement("div");
+          div.classList.add("producto");
+          div.innerHTML = `
+            <span>${producto.nombre}</span>
+            <span>${producto.precio.toFixed(2)} €</span>
+          `;
+          listaCarrito.appendChild(div);
+          total += producto.precio;
+        });
+
+        totalCompra.textContent = `Total: ${total.toFixed(2)} €`;
+      }
+
+      // Función para renderizar la lista de compra
+      function renderListaCompra(lista) {
+        listaCompraContainer.innerHTML = "";
+        
+        lista.forEach(item => {
+          const div = document.createElement("div");
+          div.classList.add("lista-item");
+          div.textContent = item;
+          listaCompraContainer.appendChild(div);
+        });
+      }
+
+      // Convertir items de lista a productos del carrito
+      function convertirListaACarrito(itemsLista) {
+        return itemsLista
+          .map(nombre => 
+            productosDisponibles.find(p => 
+              p.nombre.toLowerCase() === nombre.toLowerCase()
+            )
+          )
+          .filter(p => p); // Eliminar undefined
+      }
+
+      // Escuchar actualizaciones del carrito
+      socket.on("sincronizarCarrito", (data) => {
+        const carritoActual = Array.isArray(data) ? data : data.carrito || [];
+        renderCarrito(carritoActual);
+      });
+
+      // Escuchar actualizaciones de la lista de compra
+      socket.on("sincronizarListaCompra", (data) => {
+        const listaActual = data.listaCompra || [];
+        renderListaCompra(listaActual);
+        
+        // Opcional: Añadir automáticamente al carrito
+        const nuevosProductos = convertirListaACarrito(listaActual);
+        if (nuevosProductos.length > 0) {
+          socket.emit("carrito:agregarProductos", nuevosProductos);
+        }
+      });
+
+      // Solicitar datos al conectar
+      socket.on("connect", () => {
+        socket.emit("solicitarDatosCarrito");
+        socket.emit("solicitarDatosListaCompra");
+      });
+
+      // Manejar errores de conexión
+      socket.on("connect_error", (err) => {
+        console.error("Error de conexión:", err);
+        alert("Error al conectar con el servidor. Recargando...");
+        setTimeout(() => location.reload(), 2000);
+      });
+
+      socket.on("servidor:volver-menu", (data) => {
+        alert("Volviendo al menú...");
+        const nuevaPagina = data.pagina + "carrito.html";
+        if (window.location.pathname.split('/').pop() !== nuevaPagina) {
+          console.log(`Recibido 'volver-menu': redirigiendo a ${nuevaPagina}`);
+          window.location.href = nuevaPagina;
+        }
+      });
+
       renderCarrito([]);
       renderListaCompra([]);
     });
