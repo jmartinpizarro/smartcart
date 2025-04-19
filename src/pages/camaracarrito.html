@@ -49,11 +49,11 @@
     socket.emit("identificar", { tipo: "ordenador" });
 
     // Escucha la orden de redirección
-    socket.on("servidor:redirigir-ordenador", (data) => {
-      console.log("Redirigiendo ordenador a:", data.pagina);
-      window.location.href = data.pagina;
-    });
-    
+    socket.on("servidor:volver-menu", (data) => {
+            console.log("Redirigiendo ordenador al menú");
+            window.location.href = "/interfazcarrito.html";
+        });
+        
   </script>
 </body>
 </html>
