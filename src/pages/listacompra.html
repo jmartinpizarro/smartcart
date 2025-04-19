@@ -92,7 +92,7 @@
         </div>
 
         <!-- Botón para volver al menú principal -->
-        <button class="btn btn-secondary btn-custom" onclick="volverAlMenu()">Volver al menú</button>
+        <button class="btn btn-secondary btn-custom" onclick="volverMenu()">Volver al menú</button>
     </div>
 
     <!-- Botón de micrófono -->
@@ -228,8 +228,12 @@
         }
 
         // Función para volver al menú principal
-        function volverAlMenu() {
-                window.location.href = "/interfazmovil.html";
+        function volverMenu() {
+            socket.emit("cliente:accion", {
+                tipo: "volver-menu",
+                pagina: "interfaz"
+            });
+            window.location.href = "./interfazmovil.html";
         }
 
         // Control por voz

@@ -532,6 +532,13 @@
                     setupMotionListeners();
                 }
             }
+            function volverMenu() {
+                socket.emit("cliente:accion", {
+                    tipo: "volver-menu",
+                    pagina: "interfaz"
+                });
+                window.location.href = "./interfazmovil.html";
+            }
 
             // Setup device motion and orientation event listeners
             function setupMotionListeners() {
@@ -601,7 +608,7 @@
                 });
 
                 backButton.addEventListener('click', () => {
-                    window.location.href = 'interfazmovil.html';
+                    volverMenu();
                 });
 
                 // Request permissions and setup sensors
@@ -645,6 +652,7 @@
                 socket.emit('mapa:actualizarItems', initialItems);
                 socket.emit('mapa:actualizarPosicion', userPosition);
             });
+
             init();
         });
 
