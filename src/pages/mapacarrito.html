@@ -194,7 +194,7 @@
         });
 
         socket.on("servidor:volver-menu", (data) => {
-            alert("Volviendo al menú...");
+            //alert("Volviendo al menú...");
             const nuevaPagina = data.pagina + "carrito.html";
             if (window.location.pathname.split('/').pop() !== nuevaPagina) {
                 console.log(`Recibido 'volver-menu': redirigiendo a ${nuevaPagina}`);
