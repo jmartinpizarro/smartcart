@@ -197,6 +197,13 @@
             socket.emit('mapa:solicitarEstado');
         });
 
+        socket.emit("identificar", { tipo: "ordenador" });
+        
+        socket.on("servidor:redirigir-ordenador", (data) => {
+            console.log("Redirigiendo ordenador a:", data.pagina);
+            window.location.href = data.pagina;
+        });
+
         // Inicializar
         window.addEventListener('load', () => {
             createAisles();

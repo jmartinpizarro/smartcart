@@ -81,7 +81,22 @@ let lastKnownItems = {};
 // En server.js, modifica el manejo de mensajes así:
 io.on("connection", (socket) => {
   console.log("🔌 Cliente conectado:", socket.id);
-  
+  socket.on("identificar", (data) => {
+      if (data.tipo === "ordenador") {
+          socketOrdenador = socket;
+          console.log("Ordenador identificado:", socket.id);
+      }
+  });
+
+  // Maneja la solicitud de volver al menú
+  socket.on("cliente:volver-menu", () => {
+      if (socketOrdenador) {
+          // Envía solo al ordenador 
+          socketOrdenador.emit("servidor:redirigir-ordenador", {
+              pagina: "interfazcarrito.html"
+          });
+      }
+  });
   // Variable para almacenar el último estado conocido
   let lastKnownList = null;
   
