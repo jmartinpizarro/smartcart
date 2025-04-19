@@ -44,24 +44,6 @@
             z-index: 1000;
             display: none;
         }
-        .sync-notification {
-            position: fixed;
-            bottom: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: rgba(0,0,0,0.7);
-            color: white;
-            padding: 10px 20px;
-            border-radius: 20px;
-            z-index: 1000;
-            animation: fadeInOut 2s ease-in-out;
-        }
-        @keyframes fadeInOut {
-            0% { opacity: 0; }
-            20% { opacity: 1; }
-            80% { opacity: 1; }
-            100% { opacity: 0; }
-        }
     </style>
 </head>
 <body>
@@ -76,8 +58,6 @@
             <button class="btn btn-primary btn-custom" onclick="escanearArticulo()">Escanear artículo</button>
             <button class="btn btn-primary btn-custom" onclick="verListaCompra()">Lista de la compra</button>
             <button class="btn btn-primary btn-custom" onclick="abrirMapa()">Mapa</button>
-            <!-- Botón de volver al menú (opcional) -->
-            <button class="btn btn-secondary btn-custom" onclick="volverAlMenuMovil()">Volver al Menú</button>
         </div>
     </div>
 
@@ -87,10 +67,8 @@
     <!-- Socket.io -->
     <script src="/socket.io/socket.io.js"></script>
     <script>
-        // Variables de estado
         const socket = io();
         const notification = document.getElementById('notification');
-        let currentPage = window.location.pathname.split('/').pop();
 
         // Mostrar notificación
         function showNotification(message) {
@@ -101,77 +79,26 @@
             }, 3000);
         }
 
-        // Función para mostrar notificación de sincronización
-        function showSyncNotification() {
-            const syncNote = document.createElement('div');
-            syncNote.className = 'sync-notification';
-            syncNote.textContent = '🔄 Sincronizando con carrito...';
-            document.body.appendChild(syncNote);
-            setTimeout(() => syncNote.remove(), 2000);
-        }
-
-        // Verificar si estamos en el menú
-        function isInMenu() {
-            return currentPage === 'interfazmovil.html';
-        }
-        //comentariorandom
-        // Función para navegar sincronizando estado
-        function navigateTo(page) {
-            if (page === 'interfazmovil.html') {
-                handleReturnToMenu();
+        // Escuchar mensajes del carrito
+        socket.on("cliente:mensaje", (data) => {
+            console.log("Mensaje del carrito:", data);
+            showNotification(`Carrito: ${data.mensaje}`);
+            
+            if (data.tipo === "lista-compra" && data.items) {
+                // Guardar lista en localStorage para usarla en listacompra.html
+                localStorage.setItem('listaCompra', JSON.stringify(data.items));
             }
-            currentPage = page;
-            window.location.href = page;
-        }
-
-        // Manejar retorno al menú
-        function handleReturnToMenu() {
-            if (!isInMenu()) {
-                showSyncNotification();
-                socket.emit("cliente:accion", {
-                    tipo: "volver-menu",
-                    dispositivo: "movil",
-                    origen: currentPage
-                });
-            }
-        }
-
-        // Función explícita para volver al menú
-        function volverAlMenuMovil() {
-            navigateTo('interfazmovil.html');
-        }
-
-        // 1. Detectar cambios por navegación (atrás/adelante)
-        window.addEventListener('popstate', function() {
-            const newPage = window.location.pathname.split('/').pop();
-            if (newPage === 'interfazmovil.html' && currentPage !== 'interfazmovil.html') {
-                handleReturnToMenu();
-            }
-            currentPage = newPage;
         });
 
-        // 2. Interceptar replaceState (para SPA)
-        const originalReplaceState = history.replaceState;
-        history.replaceState = function(state, title, url) {
-            originalReplaceState.apply(this, arguments);
-            if (url && url.toString().endsWith('interfazmovil.html')) {
-                setTimeout(() => {
-                    const newPage = window.location.pathname.split('/').pop();
-                    if (newPage === 'interfazmovil.html') {
-                        handleReturnToMenu();
-                    }
-                    currentPage = newPage;
-                }, 100);
-            }
-        };
+        // Funciones para las acciones
+        // Dentro del <script> de interfazmovil.html, modifica las funciones:
 
-        // Funciones de navegación
         function escanearArticulo() {
             socket.emit("cliente:accion", {
                 tipo: "redireccion",
                 pagina: "camara"
             });
-            navigateTo('camara.html');
+            window.location.href = './camara.html';
         }
 
         function verListaCompra() {
@@ -179,7 +106,7 @@
                 tipo: "redireccion", 
                 pagina: "listacompra"
             });
-            navigateTo('listacompra.html');
+            window.location.href = "./listacompra.html";
         }
 
         function abrirMapa() {
@@ -187,7 +114,7 @@
                 tipo: "redireccion",
                 pagina: "mapa"
             });
-            navigateTo('mapa.html');
+            window.location.href = "./mapa.html";
         }
 
         // Control por voz
@@ -216,8 +143,6 @@
                     verListaCompra();
                 } else if (transcript.includes("mapa")) {
                     abrirMapa();
-                } else if (transcript.includes("menú") || transcript.includes("volver")) {
-                    volverAlMenuMovil();
                 } else {
                     showNotification("Comando no reconocido");
                 }
@@ -227,30 +152,31 @@
                 showNotification("Error en reconocimiento: " + event.error);
             };
         }
+        
+        let currentPage = 'menu';
 
-        // Escuchar mensajes del carrito
-        socket.on("cliente:mensaje", (data) => {
-            console.log("Mensaje del carrito:", data);
-            showNotification(`Carrito: ${data.mensaje}`);
-            
-            if (data.tipo === "lista-compra" && data.items) {
-                localStorage.setItem('listaCompra', JSON.stringify(data.items));
+        // Función para detectar cambios de página
+        function trackPageChange() {
+            const newPage = window.location.pathname.split('/').pop();
+            if(newPage === 'interfazmovil.html' && currentPage !== 'menu') {
+                // El usuario ha vuelto al menú
+                socket.emit("cliente:accion", {
+                    tipo: "volver-menu",
+                    origen: window.location.pathname.split('/').pop()
+                });
             }
-        });
+            currentPage = newPage === 'interfazmovil.html' ? 'menu' : newPage;
+        }
 
-        // Escuchar sincronización del carrito
-        socket.on("servidor:redireccion", (data) => {
-            if (data.tipo === "volver-menu" && data.dispositivo === "carrito") {
-                console.log("Carrito sincronizado");
-            }
-        });
 
-        // Inicialización
-        document.addEventListener('DOMContentLoaded', function() {
-            if (isInMenu()) {
-                console.log("Cargado en menú principal");
-            }
-        });
+        window.addEventListener('load', trackPageChange);
+        window.addEventListener('popstate', trackPageChange);
+
+        const originalReplaceState = history.replaceState;
+        history.replaceState = function() {
+            originalReplaceState.apply(this, arguments);
+            setTimeout(trackPageChange, 100);
+        };
     </script>
 </body>
 </html>

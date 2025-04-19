@@ -28,7 +28,7 @@
 <body>
     <video id="video" autoplay></video>
     <button id="captureButton">Capturar Imagen</button>
-    <button id = "volverAlMenu" onclick="volverAlMenuMovil()";">Volver al menú</button>
+    <button id = "volverAlMenu" onclick="window.location.href = './interfazmovil.html';">Volver al menú</button>
     <canvas id="canvas" style="display: none;"></canvas>
     <button id="enviarButton">Enviar a OpenAI</button>
     <p id="respuestaTexto" style="text-align: center; font-size: 18px;"></p>
@@ -63,14 +63,6 @@
             console.log('Imagen capturada:', imagenDataURL);
         }
 
-        function volverAlMenuMovil() {
-            socket.emit("cliente:accion", {
-                tipo: "volver-menu",
-                dispositivo: "movil",
-                origen: currentPage
-            });
-            navigateTo('interfazmovil.html');
-        }
         // Event listener para el botón de captura
         captureButton.addEventListener('click', capturarImagen);
 

@@ -43,29 +43,40 @@
     <script src="/socket.io/socket.io.js"></script>
     <script>
         const socket = io();
+        const notification = document.getElementById('notification');
 
-        // Función para volver al menú del carrito
-        function returnToCartMenu() {
-            if (!window.location.href.endsWith('interfazcarrito.html')) {
-                window.location.href = 'interfazcarrito.html';
-            }
+        function showNotification(message) {
+            notification.textContent = message;
+            notification.style.display = 'block';
+            setTimeout(() => {
+                notification.style.display = 'none';
+            }, 3000);
         }
 
-        // Escuchar eventos del servidor
+        // Escuchar acciones del móvil
         socket.on("servidor:redireccion", (data) => {
-            if (data.tipo === "volver-menu" && data.dispositivo === "movil") {
-                returnToCartMenu();
+            if(data.tipo === "volver-menu") {
+                if(window.location.pathname.split('/').pop() !== 'interfazcarrito.html') {
+                    showNotification("Volviendo al menú...");
+                    window.location.href = "interfazcarrito.html";
+                }
+                return;
+            }
+
+            // En caso de redirección general
+            if (data.pagina) {
+                const nuevaPagina = data.pagina + "carrito.html";
+                if (window.location.pathname.split('/').pop() !== nuevaPagina) {
+                    showNotification(`Sincronizado con móvil: ${data.pagina}`);
+                    window.location.href = nuevaPagina;
+                }
             }
         });
 
-        // Si tienes botones en el carrito que vuelven al menú:
-        function volverAlMenuCarrito() {
-            socket.emit("cliente:accion", {
-                tipo: "volver-menu",
-                dispositivo: "carrito"
-            });
-            returnToCartMenu();
-        }
+
+        socket.on("cliente:mensaje", (data) => {
+            showNotification(`Móvil: ${data.mensaje}`);
+        });
     </script>
 </body>
 </html>

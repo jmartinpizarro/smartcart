@@ -92,7 +92,7 @@
         </div>
 
         <!-- Botón para volver al menú principal -->
-        <button class="btn btn-secondary btn-custom" onclick="volverAlMenuMovil()">Volver al menú</button>
+        <button class="btn btn-secondary btn-custom" onclick="volverAlMenu()">Volver al menú</button>
     </div>
 
     <!-- Botón de micrófono -->
@@ -228,13 +228,8 @@
         }
 
         // Función para volver al menú principal
-        function volverAlMenuMovil() {
-            socket.emit("cliente:accion", {
-            tipo: "volver-menu",
-            dispositivo: "movil",
-            origen: currentPage
-        });
-        navigateTo('interfazmovil.html');
+        function volverAlMenu() {
+                window.location.href = "/interfazmovil.html";
         }
 
         // Control por voz
@@ -273,7 +268,7 @@
                         showNotification("No entendí qué artículo borrar.");
                     }
                 } else if (transcript.includes("volver")) {
-                    volverAlMenuMovil();
+                    volverAlMenu();
                 } else {
                     showNotification("Comando no reconocido");
                 }
