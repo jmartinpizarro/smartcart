@@ -158,13 +158,12 @@
         // Función para guardar la lista y sincronizar
         function guardarLista() {
             const lista = document.getElementById("listaArticulos");
-            const articulos = Array.from(lista.getElementsByTagName("li")).map(li => li.querySelector("span").textContent);
+            const articulos = Array.from(lista.getElementsByTagName("li")).map(li => 
+                li.querySelector("span").textContent
+            );
             
-            socket.emit("móvil:actualizarListaCompra", (articulos));
-
-            showNotification("Lista actualizada");
-
-            //cargarLista();
+            // Enviar como array simple de strings
+            socket.emit("móvil:actualizarListaCompra", articulos);
         }
 
         // Añadir artículo a la lista solo pulsando enter

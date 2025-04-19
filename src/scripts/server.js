@@ -86,12 +86,12 @@ io.on("connection", (socket) => {
   
   // Enviar los datos actuales cuando la interfaz del movil se conecta
   socket.on("solicitarDatosListaCompra", () => {
-    socket.emit("sincronizarListaCompra", listaCompra);
+    socket.emit("sincronizarListaCompra", { listaCompra });
   });
 
   // Enviar los datos actuales cuando la interfaz del carrito se conecta
   socket.on("solicitarDatosCarrito", () => {
-    socket.emit("sincronizarCarrito", carrito);
+    socket.emit("sincronizarCarrito", { carrito });
   });
 
   // Cuando en la interfaz del móvil se añada o retire un nuevo producto
