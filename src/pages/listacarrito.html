@@ -1,178 +1,84 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SmartCart - Carrito de la compra</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <style>
-        body {           
-            max-width: 600px;
-            margin: auto;
-            padding: 20px;
-        }
-        .producto {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 10px;
-            border: 1px solid #ccc;
-            margin-bottom: 10px;
-            border-radius: 5px;
-        }
-        .btn {
-            padding: 5px 10px;
-            margin: 0 5px;
-            cursor: pointer;
-        }
-        .btn-remove {
-            background-color: red;
-            color: white;
-            border: none;
-        }
-        .btn-mic {
-            position: fixed;
-            bottom: 20px;
-            right: 20px;
-            width: 60px;
-            height: 60px;
-            border-radius: 50%;
-            font-size: 24px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-    </style>
+  <meta charset="UTF-8">
+  <title>Carrito de la Compra</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    body {
+      background-color: #f0f2f5;
+      padding: 20px;
+    }
+    .producto {
+      background-color: #fff;
+      padding: 15px;
+      margin-bottom: 10px;
+      border-radius: 10px;
+      border: 1px solid #ccc;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .total {
+      font-size: 24px;
+      font-weight: bold;
+      margin-top: 20px;
+      text-align: right;
+    }
+  </style>
 </head>
 <body>
-    <div class="container">
-        <h1>Carrito de la Compra</h1>
-        <div id="carrito"></div>
-        <h3>Total: <span id="total">0</span> €</h3>
+  <div class="container">
+    <h1 class="text-center mb-4">🛒 Carrito de la Compra</h1>
+    <div id="listaCarrito">
+      <!-- Productos aparecerán aquí -->
     </div>
+    <div class="total" id="totalCompra">Total: 0.00 €</div>
+  </div>
 
-    <!-- Botón de micrófono -->
-    <button class="btn btn-primary btn-mic" onclick="activarMicrofonoCarro()">🎤</button>
+  <script src="/socket.io/socket.io.js"></script>
+  <script>
+    const socket = io();
+    const listaCarrito = document.getElementById("listaCarrito");
+    const totalCompra = document.getElementById("totalCompra");
 
-    <!-- Incluir Socket.io desde el servidor -->
-    <script src="/socket.io/socket.io.js"></script>
-    <script>
-        // Conectar al servidor
-        const socket = io();
+    function renderCarrito(carrito) {
+      listaCarrito.innerHTML = "";
+      let total = 0;
 
-        // Variable carrito como un array de objetos
-        let carrito = [
-            { id: 1, nombre: "Leche", precio: 20, cantidad: 1 },
-            { id: 2, nombre: "Pan", precio: 15, cantidad: 2 }
-        ];
+      carrito.forEach(producto => {
+        const div = document.createElement("div");
+        div.classList.add("producto");
+        div.innerHTML = `
+          <span>${producto.nombre}</span>
+          <span>${producto.precio.toFixed(2)} €</span>
+        `;
+        listaCarrito.appendChild(div);
+        total += producto.precio;
+      });
 
-        // Función para renderizar el carrito
-        function renderCart() {
-            const cartContainer = document.getElementById("carrito");
-            cartContainer.innerHTML = "";
-            let total = 0;
-            // Se recorre cada producto en el carrito
-            carrito.forEach(item => {
-                total += item.precio * item.cantidad;
-                // Se crea un elemento div con la información de cada producto
-                const producto = document.createElement("div");
-                producto.classList.add("producto");
-                // Se muestra la información del producto y crea tres botones 
-                // para cambiar la cantidad de cada producto
-                producto.innerHTML = `
-                    <span>${item.nombre} - $${item.precio} x ${item.cantidad}</span>
-                    <div>
-                        <button class="btn" onclick="updateQuantity(${item.id}, -1)">-</button>
-                        <button class="btn" onclick="updateQuantity(${item.id}, 1)">+</button>
-                        <button class="btn btn-remove" onclick="removeItem(${item.id})">X</button>
-                    </div>
-                `;
-                cartContainer.appendChild(producto);
-                socket.emit("carrito:agregarProducto", item);
-            });
-            document.getElementById("total").innerText = total;
-        }
+      totalCompra.textContent = `Total: ${total.toFixed(2)} €`;
+    }
 
-        // Función para cambiar la cantidad de cada producto
-        function updateQuantity(id, cambio) {
-            carrito = carrito.map(item => {
-                if (item.id === id) {
-                    const nuevaCantidad = item.cantidad + cambio;
-                    if (nuevaCantidad < 0) {
-                        removeItem(id);
-                        return null;
-                    }
-                    return { ...item, nuevaCantidad};
-                }
-                return item;
-            }).filter(item => item !== null);
-            renderCart();
-        }
+    // Solicita datos al cargar
+    socket.emit("solicitarDatosCarrito");
 
-        // Función para eliminar un producto
-        function removeItem(id) {
-            const item = carrito.find(item => item.id === id);
-            if (item) {
-                carrito = carrito.filter(item => item.id !== id);
-                socket.emit("carrito:eliminarProducto", item);
-            renderCart();
-            }           
-        }
+    // Recibe actualización de carrito
+    socket.on("sincronizarCarrito", (data) => {
+      if (Array.isArray(data)) {
+        renderCarrito(data);
+      } else if (data.carrito) {
+        renderCarrito(data.carrito);
+      }
+    });
 
-        socket.on("sincronizarCarrito", (data) => {
-            console.log("🛒 Carrito actualizado:", data);
-        });
-
-        /*
-        function activarMicrofonoCarro() {
-            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-            if (!SpeechRecognition) {
-                alert("Tu navegador no soporta Speech Recognition");
-                return;
-            }
-
-            const recognition = new SpeechRecognition();
-            recognition.lang = 'es-ES';
-            recognition.interimResults = false;
-            recognition.maxAlternatives = 1;
-
-            recognition.start();
-            alert("Di un comando");
-
-            recognition.onresult = function(event) {
-                const transcript = event.results[0][0].transcript.toLowerCase();
-                console.log("Reconocido:", transcript);
-
-                // Expresión regular para detectar eliminar cualquier producto
-                const regexEliminar = /eliminar (\w+(?: \w+)*)/;
-
-                // Intentamos hacer coincidir la expresion regular 
-                // con el comando de voz
-                const match = transcript.match(regexEliminar);
-
-                if (match) {
-                    const productName = match[1].toLowerCase();
-                    console.log('Comando eliminar producto: ${productName}');
-
-                    let productFound = false;
-                    carrito.forEach(item => {
-                        if (item.name.toLowerCase === productName){
-                            productFound = true;
-                            removeItem(item.id);
-                        }
-                    });
-                }
-                else {
-                    alert("Comando no reconocido o formato incorrecto");
-                }
-            };
-            recognition.onerror = function(event) {
-                alert("Error en reconocimiento: " + event.error);
-            };          
-        }*/
-
-        renderCart();
-    </script>
-    <script src="/socket.io/socket.io.js"></script>
+    // También escucha mensajes desde el cliente para sincronizar
+    socket.on("cliente:mensaje", (data) => {
+      if (data.tipo === "lista-compra" && data.items) {
+        socket.emit("solicitarDatosCarrito");
+      }
+    });
+  </script>
 </body>
 </html>
