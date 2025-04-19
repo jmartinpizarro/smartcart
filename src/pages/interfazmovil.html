@@ -114,7 +114,7 @@
                 tipo: "redireccion",
                 pagina: "mapa"
             });
-            window.location.href = "./mapgiros.html";
+            window.location.href = "./mapa.html";
         }
 
         // Control por voz
@@ -152,6 +152,31 @@
                 showNotification("Error en reconocimiento: " + event.error);
             };
         }
+        
+        let currentPage = 'menu';
+
+        // Función para detectar cambios de página
+        function trackPageChange() {
+            const newPage = window.location.pathname.split('/').pop();
+            if(newPage === 'interfazmovil.html' && currentPage !== 'menu') {
+                // El usuario ha vuelto al menú
+                socket.emit("cliente:accion", {
+                    tipo: "volver-menu",
+                    origen: window.location.pathname.split('/').pop()
+                });
+            }
+            currentPage = newPage === 'interfazmovil.html' ? 'menu' : newPage;
+        }
+
+
+        window.addEventListener('load', trackPageChange);
+        window.addEventListener('popstate', trackPageChange);
+
+        const originalReplaceState = history.replaceState;
+        history.replaceState = function() {
+            originalReplaceState.apply(this, arguments);
+            setTimeout(trackPageChange, 100);
+        };
     </script>
 </body>
 </html>

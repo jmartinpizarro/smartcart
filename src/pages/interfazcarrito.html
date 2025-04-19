@@ -55,12 +55,18 @@
 
         // Escuchar acciones del móvil
         socket.on("servidor:redireccion", (data) => {
+            if(data.tipo === "volver-menu") {
+                if(window.location.pathname.split('/').pop() !== 'interfazcarrito.html') {
+                    showNotification("Sincronizando con móvil...");
+                    window.location.href = "interfazcarrito.html";
+                }
+            }
             console.log("Redireccionando a:", data.pagina + "carrito.html");
             showNotification(`Sincronizado con móvil: ${data.pagina}`);
             window.location.href = data.pagina + "carrito.html";
         });
 
-        
+
         socket.on("cliente:mensaje", (data) => {
             showNotification(`Móvil: ${data.mensaje}`);
         });

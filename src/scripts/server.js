@@ -201,7 +201,12 @@ io.on("connection", (socket) => {
 
   socket.on("cliente:accion", (data) => {
       console.log(`Acción recibida de cliente: ${data.tipo} - ${data.pagina}`);
-      
+      if(data.tipo === "volver-menu") {
+        io.emit("servidor:redireccion", {
+            tipo: "volver-menu",
+            origen: data.origen
+        });
+    }
       if(data.tipo === "redireccion") {
           // Enviar a todos los clientes carrito
           io.emit("servidor:redireccion", {
