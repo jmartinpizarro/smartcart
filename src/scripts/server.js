@@ -98,7 +98,7 @@ io.on("connection", (socket) => {
   // Cuando en la interfaz del móvil se añada o retire un nuevo producto
   socket.on("móvil:actualizarListaCompra", (data) => {
     console.log("📜 Lista de compra actualizada:", data);
-    if (Array.isArray(lista) && lista.length > 0) {
+    if (Array.isArray(data) && data.length > 0) {
       listaCompra = data.sort((a, b) => a.localeCompare(b));
     }  
     io.emit("sincronizarListaCompra", { listaCompra });
