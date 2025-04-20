@@ -233,13 +233,11 @@
         // Función para borrar toda la lista de la compra
         function borrarListaCompra() {
             const lista = document.getElementById("listaArticulos");
-            const articulos = Array.from(lista.getElementsByTagName("li")).map(li => 
-                li.querySelector("span").textContent
-            );
 
-            if (articulos) {
+            if (lista) {
                 lista.innerHTML = '';
-                socket.emit("móvil:actualizarListaCompra", lista);
+                const articulos = [];
+                socket.emit("móvil:actualizarListaCompra", articulos);
                 console.log("🧼 Lista de la compra borrada");
             }
         }
