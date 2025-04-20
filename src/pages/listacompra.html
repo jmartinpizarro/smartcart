@@ -69,9 +69,33 @@
             z-index: 1000;
             display: none;
         }
+        #contenedorCanvas {
+            position: relative;
+            width: 100%;
+            max-width: 400px;
+            margin: auto;
+            padding-top: 16px;
+        }
+        #gestosCanvas {
+            width: 100%;
+            height: auto;
+            border: 2px dashed #aaa;
+            border-radius: 12px;
+            touch-action: none;
+            background-color: #f9f9f9;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            display: block;
+            margin: 0 auto;
+        }
+        .instruccionesGestos {
+            text-align: center;
+            font-size: 16px;
+            color: #555;
+            margin-top: 8px;
+        }       
     </style>
 </head>
-<body ontouchstart="startDraw(event)" ontouchmove="draw(event)" ontouchend="endDraw()">
+<body>
     <div class="container">
         <h1 class="text-center mb-4">SmartCart - Lista de la Compra</h1>
 
@@ -95,6 +119,13 @@
         <button class="btn btn-secondary btn-custom" onclick="volverMenu()">Volver al menú</button>
     </div>
 
+    <div id="contenedorCanvas">
+        <canvas id="gestosCanvas" width="300" height="300"></canvas>
+        <p class="instruccionGestos">
+        ✍️ Dibuja un círculo aquí para finalizar la compra
+        </p>
+    </div>
+
     <!-- Botón de micrófono -->
     <button class="btn btn-primary btn-mic" onclick="activarMicrofonoCarro()">🎤</button>
 
@@ -109,18 +140,32 @@
         let lastShakeTime = 0;
         let drawing = false;
         let points = [];
+        const canvas = document.getElementById("gestosCanvas");
+        const ctx = canvas.getContext("2d");
+        canvas.addEventListener("touchstart", startDraw);
+        canvas.addEventListener("touchmove", draw);
+        canvas.addEventListener("touchend", endDraw);
 
         function startDraw(e) {
             drawing = true;
             points = [];
             const touch = e.touches[0];
-            points.push({ x: touch.clientX, y: touch.clientY });
+            const x = touch.clientX - canvas.getBoundingClientRect().left;
+            const y = touch.clientY - canvas.getBoundingClientRect().top;
+            points.push({ x, y });
         }
 
         function draw(e) {
             if (!drawing) return;
             const touch = e.touches[0];
-            points.push({ x: touch.clientX, y: touch.clientY });
+            const x = touch.clientX - canvas.getBoundingClientRect().left;
+            const y = touch.clientY - canvas.getBoundingClientRect().top;
+            points.push({ x, y });
+
+            ctx.lineWidth = 2;
+            ctx.strokeStyle = "blue";
+            ctx.lineTo(x, y);
+            ctx.stroke();
         }
 
         function endDraw() {
@@ -129,8 +174,9 @@
                 console.log("🟢 Gesto de círculo detectado");
                 finalizarCompra();
             } else {
-                console.log("🟢 Gesto de círculo detectado");
+                console.log("❌ No es un círculo");
             }
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
         }
 
         function isCircle(points) {
