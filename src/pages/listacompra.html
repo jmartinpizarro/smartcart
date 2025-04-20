@@ -105,6 +105,8 @@
         socket.emit("solicitarDatosListaCompra");
         const notification = document.getElementById('notification');
         let esCarrito = window.location.pathname.includes('carrito');
+        // Tiempo en milisegundos que pasa desde la última que se ha sacudido el móvil
+        let lastShakeTime = 0;
 
         socket.on("sincronizarListaCompra", (data) => {
             console.log("📜 Lista de compra actualizada:", data);
@@ -202,6 +204,23 @@
             }
         }
 
+        window.addEventListener('devicemotion', function(event) {
+            const acceleration = event.accelerationIncludingGravity;
+
+            const accX = acceleration.x || 0;
+            const accY = acceleration.y || 0;
+            const accZ = acceleration.z || 0;
+
+            const totalAcceleration = Math.sqrt(accX * accX + accY * accY + accZ * accZ);
+            const currentTime = new Date().getTime();
+
+            if (totalAcceleration > 20 && currentTime - lastShakeTime > 1000) {
+                lastShakeTime = currentTime;
+                borrarListaCompra();
+                alert("🧹 Lista de la compra borrada por sacudir el móvil");
+            }
+        });
+
         // Función para borrar un artículo de la lista
         function borrarArticulo(boton) {
             const li = boton.parentElement;
@@ -209,6 +228,20 @@
 
             // Guardar y sincronizar la lista después de borrar
             guardarLista();
+        }
+
+        // Función para borrar toda la lista de la compra
+        function borrarListaCompra() {
+            const lista = document.getElementById("listaArticulos");
+            const articulos = Array.from(lista.getElementsByTagName("li")).map(li => 
+                li.querySelector("span").textContent
+            );
+
+            if (articulos) {
+                lista.innerHTML = '';
+                socket.emit("móvil:actualizarListaCompra", lista);
+                console.log("🧼 Lista de la compra borrada");
+            }
         }
 
         // Función para ordenar la lista alfabéticamente
