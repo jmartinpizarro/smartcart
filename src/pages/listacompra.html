@@ -163,9 +163,11 @@
             const y = touch.clientY - canvas.getBoundingClientRect().top;
             points.push({ x, y });
 
+            ctx.beginPath();
+            ctx.moveTo(points[points.length - 2].x, points[points.length - 2].y);
+            ctx.lineTo(x, y);
             ctx.lineWidth = 2;
             ctx.strokeStyle = "blue";
-            ctx.lineTo(x, y);
             ctx.stroke();
         }
 
