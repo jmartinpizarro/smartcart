@@ -100,6 +100,8 @@ io.on("connection", (socket) => {
     console.log("📜 Lista de compra actualizada:", data);
     if (Array.isArray(data) && data.length > 0) {
       listaCompra = data.sort((a, b) => a.localeCompare(b));
+    } else {
+      listaCompra = [];
     }  
     io.emit("sincronizarListaCompra", { listaCompra });
   });
