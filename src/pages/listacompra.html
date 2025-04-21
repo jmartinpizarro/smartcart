@@ -459,6 +459,7 @@
             alert("✅ ¡Compra finalizada!");
             borrarListaCompra();
             volverMenu();
+            socket.emit("Compra finalizada");
         }
 
     // Escuchar actualizaciones de la lista

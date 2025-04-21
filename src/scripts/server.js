@@ -67,11 +67,7 @@ app.get("/carrito", (req, res) => {
 });
 
 // Base de datos con todos los productos disponibles del supermercado
-const productosDisponibles = [
-  { id: 1, nombre: 'Manzanas', precio: 2.5 },
-  { id: 2, nombre: 'Plátanos', precio: 1.2 },
-  { id: 3, nombre: 'Persona con auriculares.', precio: 1.5 }   // Solo para probar el modelo
-];
+const productosDisponibles = JSON.parse(fs.readFileSync('../data/productos.json', 'utf8'));
 
 let listaCompra = [];
 let carrito = [];
@@ -95,6 +91,12 @@ io.on("connection", (socket) => {
     socket.emit("sincronizarCarrito", { carrito });
   });
 
+  // Cuando se termine la compra borramos la lista de productos
+  socket.on("Compra finalizada", () => {
+    carrito = [];
+    io.emit("sincronizarCarrito", { carrito });
+  });
+
   // Cuando en la interfaz del móvil se añada o retire un nuevo producto
   socket.on("móvil:actualizarListaCompra", (data) => {
     console.log("📜 Lista de compra actualizada:", data);
@@ -108,10 +110,11 @@ io.on("connection", (socket) => {
 
   // Cuando en la interfaz de la camara se añada un nuevo producto
   socket.on("camara:agregarProducto", (nombreProducto) => {
-    console.log("📷 Producto añadido al carrito:", nombreProducto);
-    const existeCarrito = carrito.some((p) => p.nombre === nombreProducto);
+    nombreProductoLimpio = limpiarTexto(nombreProducto);
+    console.log("📷 Producto añadido al carrito:", nombreProductoLimpio);
+    const existeCarrito = carrito.some((p) => p.nombre === nombreProductoLimpio);
     if (!existeCarrito) {
-      const producto = productosDisponibles.find(p => p.nombre === nombreProducto);  
+      const producto = productosDisponibles.find(p => p.nombre === nombreProductoLimpio);  
       if (producto) {
         carrito.push(producto);
         console.log("carritoActual:", carrito);
@@ -119,13 +122,17 @@ io.on("connection", (socket) => {
       }    
     }
     const existeLista = listaCompra.some(
-      (p) => p.toLowerCase().trim() === nombreProducto.toLowerCase().trim());
+      (p) => p.toLowerCase().trim() === nombreProductoLimpio.toLowerCase().trim());
     if(!existeLista) {
-      listaCompra.push(nombreProducto);
+      listaCompra.push(nombreProductoLimpio);
       console.log("listaCompraActual:", listaCompra);
       io.emit("sincronizarListaCompra", { listaCompra });
     }
   });
+
+  function limpiarTexto(texto) {
+    return texto.trim().toLowerCase().replace(/[.,!?]/g, '');
+  }
 
   // Cuando en la interfaz del carrito se añada un nuevo producto
   socket.on("carrito:agregarProducto", (producto) => {

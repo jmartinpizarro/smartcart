@@ -1,0 +1,29 @@
+[
+    { "id": 1, "nombre": "Manzanas", "precio": 2.5 },
+    { "id": 2, "nombre": "Plátanos", "precio": 1.2 },
+    { "id": 3, "nombre": "Persona con auriculares", "precio": 1.5 },
+    { "id": 4, "nombre": "Leche", "precio": 1.0 },
+    { "id": 5, "nombre": "Pan", "precio": 1.1 },
+    { "id": 6, "nombre": "Huevos", "precio": 2.0 },
+    { "id": 7, "nombre": "Queso", "precio": 3.5 },
+    { "id": 8, "nombre": "Yogur", "precio": 0.9 },
+    { "id": 9, "nombre": "Arroz", "precio": 1.3 },
+    { "id": 10, "nombre": "Pasta", "precio": 1.4 },
+    { "id": 11, "nombre": "Tomates", "precio": 1.6 },
+    { "id": 12, "nombre": "Zanahorias", "precio": 1.0 },
+    { "id": 13, "nombre": "Cebolla", "precio": 0.8 },
+    { "id": 14, "nombre": "Aceite de oliva", "precio": 4.2 },
+    { "id": 15, "nombre": "Galletas", "precio": 2.2 },
+    { "id": 16, "nombre": "Cereal", "precio": 3.0 },
+    { "id": 17, "nombre": "Mantequilla", "precio": 2.8 },
+    { "id": 18, "nombre": "Café", "precio": 3.5 },
+    { "id": 19, "nombre": "Té", "precio": 2.0 },
+    { "id": 20, "nombre": "Chocolate", "precio": 1.9 },
+    { "id": 21, "nombre": "Refresco", "precio": 1.5 },
+    { "id": 22, "nombre": "Agua", "precio": 0.7 },
+    { "id": 23, "nombre": "Detergente", "precio": 5.0 },
+    { "id": 24, "nombre": "Jabón", "precio": 1.2 },
+    { "id": 25, "nombre": "Champú", "precio": 3.6 }
+  ]
+  
+  
