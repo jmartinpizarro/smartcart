@@ -6,19 +6,37 @@
     <title>SmartCart - Carrito</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
-        body {
+        body, html {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            overflow: hidden;
             background-color: #f8f9fa;
-            padding: 20px;
         }
-        .btn-custom {
+        .carrito-simulacion {
+            position: relative;
             width: 100%;
-            height: 80px;
-            font-size: 20px;
-            margin-bottom: 15px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border-radius: 10px;
+            height: 100vh;
+            overflow: hidden;
+        }
+        .carrito-simulacion img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        .pantalla-integrada {
+            position: absolute;
+            bottom: 5%; /* Ajusta este valor para mover más arriba/abajo */
+            left: 50%;
+            transform: translateX(-50%);
+            width: 80%;
+            height: 45%; /* Ajusta la altura de la pantalla */
+            background-color: white;
+            box-shadow: 0 0 20px rgba(0,0,0,0.4);
+            border-radius: 20px;
+            padding: 20px;
+            font-size: 1rem;
+            overflow: auto;
         }
         .notification {
             position: fixed;
@@ -32,28 +50,11 @@
             z-index: 1000;
             display: none;
         }
-        .carrito-simulacion {
-            position: relative;
-            max-width: 1000px;
-            margin: auto;
-        }
-        .pantalla-integrada {
-            position: absolute;
-            bottom: 8%; /* Más cerca de la parte inferior */
-            left: 50%;
-            width: 80%; /* Mucho más grande */
-            height: 55%; /* Más alta también */
-            background-color: white;
-            box-shadow: 0 0 20px rgba(0,0,0,0.4);
-            border-radius: 20px;
-            padding: 20px;
-            font-size: 1rem;
-        }
     </style>
 </head>
 <body>
     <div class="carrito-simulacion">
-        <img src= "../images/carritocompra.jpg" alt="Carrito" style="width: 100%; height: auto">
+        <img src="../images/carritocompra.jpg" alt="Carrito">
         <div class="pantalla-integrada">
             <div class="container">
                 <h1 class="text-center mb-4">SmartCart - Carrito</h1>
@@ -102,14 +103,7 @@
                             }
                         }
                     });
-                    /*socket.on("connect", () => {
-                        alert("Conectado al servidor");
-                    });
-                    socket.on("cliente:mensaje", (data) => {
-                        showNotification(`Móvil: ${data.mensaje}`);
-                    });*/
                 });
-                
             </script>
         </div>
     </div>
