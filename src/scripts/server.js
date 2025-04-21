@@ -66,8 +66,9 @@ app.get("/carrito", (req, res) => {
   res.sendFile(path.join(PAGES_ROUTE, "listacarrito.html"));
 });
 
+const productosPath = path.join(__dirname, '..', 'data', 'productos.json');
 // Base de datos con todos los productos disponibles del supermercado
-const productosDisponibles = JSON.parse(fs.readFileSync('../data/productos.json', 'utf8'));
+const productosDisponibles = JSON.parse(fs.readFileSync(productosPath, 'utf8'));
 
 let listaCompra = [];
 let carrito = [];
