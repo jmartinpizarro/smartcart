@@ -143,6 +143,9 @@
             let userPosition = loadPosition() || { x: 30, y: 370 };
             const stepSize = 10;            // Cuánto avanza el usuario en el mapa por paso
 
+            //Para guardar la posición antes de volver al menú
+            let lastPosition = null;
+
             // Sensor state variables
             let isCalibrated = false;
             let accelerationOffset = { x: 0, y: 0, z: 0 };
@@ -297,6 +300,9 @@
             });
             // Load position from localStorage
             function loadPosition() {
+                const lastPos = localStorage.getItem('lastCartPosition');
+                if (lastPos) return JSON.parse(lastPos);
+    
                 const savedPos = localStorage.getItem('cartPosition');
                 return savedPos ? JSON.parse(savedPos) : null;
             }
@@ -533,6 +539,7 @@
                 }
             }
             function volverMenu() {
+                localStorage.setItem('lastPosition', JSON.stringify(userPosition));
                 socket.emit("cliente:accion", {
                     tipo: "volver-menu",
                     pagina: "interfaz"
@@ -605,6 +612,7 @@
                     stepCount = 0;
                     stepCountDisplay.textContent = stepCount;
                     updateUserPosition();
+                    localStorage.removeItem('lastPosition');
                 });
 
                 backButton.addEventListener('click', () => {
