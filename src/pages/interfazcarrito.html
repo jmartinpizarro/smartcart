@@ -32,63 +32,85 @@
             z-index: 1000;
             display: none;
         }
+        .carrito-simulacion {
+            position: relative;
+            max-width: 1000px;
+            margin: auto;
+        }
+        .pantalla-integrada {
+            position: absolute;
+            top: 20%; /* ajusta según la imagen */
+            left: 35%; /* ajusta según la imagen */
+            width: 300px;
+            height: 200px;
+            background-color: white;
+            box-shadow: 0 0 10px rgba(0,0,0,0.3);
+            border-radius: 10px;
+            overflow: hidden;
+        }
     </style>
 </head>
 <body>
-    <div class="container">
-        <h1 class="text-center mb-4">SmartCart - Carrito</h1>
-        <p class="text-center mb-4 fs-5">
-            Instrucciones de uso:
-            <br> 1.- Abre la aplicación móvil SmartCart
-            <br> 2.- Conéctate a la misma red Wi-Fi que el carrito
-            <br> 3.- ¡Disfruta de la experiencia de compra!
-            <br>
-            <br> Podrás introducir tu lista de la compra y el carrito te guiará por el supermercado.
-        </p>
-        <div class="notification" id="notification"></div>
-    </div>
-
-    <script src="/socket.io/socket.io.js"></script>
-    <script>
-        document.addEventListener("DOMContentLoaded", () => {
-            const socket = io();
-            const notification = document.getElementById('notification');
-
-            function showNotification(message) {
-                notification.textContent = message;
-                notification.style.display = 'block';
-                setTimeout(() => {
-                    notification.style.display = 'none';
-                }, 3000);
-            }
-
-            // Escuchar acciones del móvil
-            socket.on("servidor:redireccion", (data) => {
-                if(data.tipo === "volver-menu") {
-                    if(window.location.pathname.split('/').pop() !== 'interfazcarrito.html') {
-                        showNotification("Volviendo al menú...");
-                        window.location.href = "interfazcarrito.html";
-                    }
-                    return;
-                }
-
-                // En caso de redirección general
-                if (data.pagina) {
-                    const nuevaPagina = data.pagina + "carrito.html";
-                    if (window.location.pathname.split('/').pop() !== nuevaPagina) {
-                        showNotification(`Sincronizado con móvil: ${data.pagina}`);
-                        window.location.href = nuevaPagina;
-                    }
-                }
-            });
-            /*socket.on("connect", () => {
-                alert("Conectado al servidor");
-            });
-            socket.on("cliente:mensaje", (data) => {
-                showNotification(`Móvil: ${data.mensaje}`);
-            });*/
-        });
+    <div class="carrito-simulacion">
+        <img src="../images/carritocompra.jpg" alt="Carrito" class="img-fluid">
+        <div class="pantalla-integrada">
+            <div class="container">
+                <h1 class="text-center mb-4">SmartCart - Carrito</h1>
+                <p class="text-center mb-4 fs-5">
+                    Instrucciones de uso:
+                    <br>
+                    <br> 1.- Abre la aplicación móvil SmartCart
+                    <br> 2.- Conéctate a la misma red Wi-Fi que el carrito
+                    <br> 3.- ¡Disfruta de la experiencia de compra!
+                    <br>
+                    <br> Podrás introducir tu lista de la compra y el carrito te guiará por el supermercado.
+                </p>
+                <div class="notification" id="notification"></div>
+            </div>
         
-    </script>
+            <script src="/socket.io/socket.io.js"></script>
+            <script>
+                document.addEventListener("DOMContentLoaded", () => {
+                    const socket = io();
+                    const notification = document.getElementById('notification');
+        
+                    function showNotification(message) {
+                        notification.textContent = message;
+                        notification.style.display = 'block';
+                        setTimeout(() => {
+                            notification.style.display = 'none';
+                        }, 3000);
+                    }
+        
+                    // Escuchar acciones del móvil
+                    socket.on("servidor:redireccion", (data) => {
+                        if(data.tipo === "volver-menu") {
+                            if(window.location.pathname.split('/').pop() !== 'interfazcarrito.html') {
+                                showNotification("Volviendo al menú...");
+                                window.location.href = "interfazcarrito.html";
+                            }
+                            return;
+                        }
+        
+                        // En caso de redirección general
+                        if (data.pagina) {
+                            const nuevaPagina = data.pagina + "carrito.html";
+                            if (window.location.pathname.split('/').pop() !== nuevaPagina) {
+                                showNotification(`Sincronizado con móvil: ${data.pagina}`);
+                                window.location.href = nuevaPagina;
+                            }
+                        }
+                    });
+                    /*socket.on("connect", () => {
+                        alert("Conectado al servidor");
+                    });
+                    socket.on("cliente:mensaje", (data) => {
+                        showNotification(`Móvil: ${data.mensaje}`);
+                    });*/
+                });
+                
+            </script>
+        </div>
+    </div>
 </body>
 </html>
