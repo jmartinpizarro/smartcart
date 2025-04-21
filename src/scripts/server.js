@@ -70,7 +70,7 @@ app.get("/carrito", (req, res) => {
 const productosDisponibles = [
   { id: 1, nombre: 'Manzanas', precio: 2.5 },
   { id: 2, nombre: 'Plátanos', precio: 1.2 },
-  { id: 3, nombre: 'Persona con auriculares', precio: 1.5 }   // Solo para probar el modelo
+  { id: 3, nombre: 'Persona con auriculares.', precio: 1.5 }   // Solo para probar el modelo
 ];
 
 let listaCompra = [];
