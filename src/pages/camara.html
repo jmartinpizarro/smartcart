@@ -5,33 +5,76 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Escanear Artículo</title>
     <style>
-        video, canvas {
+        .camera-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 16px;
+            gap: 12px;
+            background-color: #f9f9f9;
+            height: 100vh;
+            box-sizing: border-box;
+        }
+
+        video {
             width: 100%;
             max-width: 400px;
-            margin: 10px auto;
-            display: block;
+            border-radius: 12px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
         }
-        #captureButton {
-            display: block;
-            margin: 20px auto;
-            padding: 10px 20px;
+
+        .button-group {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            width: 100%;
+            max-width: 300px;
+        }
+
+        .button-group button {
+            padding: 12px;
             font-size: 16px;
+            border: none;
+            border-radius: 8px;
+            background-color: #4a90e2;
+            color: white;
+            cursor: pointer;
+            transition: background 0.2s ease;
         }
-        #volverAlMenu {
-            display: block;
-            margin: 20px auto;
-            padding: 10px 20px;
-            font-size: 16px;
+
+        .button-group button:hover {
+            background-color: #357ab8;
         }
+
+        #respuestaTexto {
+            font-size: 18px;
+            text-align: center;
+            color: #333;
+        }
+
     </style>
 </head>
 <body>
+    <!--
     <video id="video" autoplay></video>
     <button id="captureButton">Capturar Imagen</button>
     <button id = "volverAlMenu" onclick="volverMenu()">Volver al menú</button>
     <canvas id="canvas" style="display: none;"></canvas>
     <button id="enviarButton">Enviar a OpenAI</button>
-    <p id="respuestaTexto" style="text-align: center; font-size: 18px;"></p>
+    <p id="respuestaTexto" style="text-align: center; font-size: 18px;"></p>-->
+
+    <div class="camera-container">
+        <video id="video" autoplay playsinline></video>
+      
+        <div class="button-group">
+          <button id="captureButton">📸 Capturar Imagen</button>
+          <button id="enviarButton">🚀 Enviar a OpenAI</button>
+          <button id="volverAlMenu" onclick="volverMenu()">🔙 Volver al menú</button>
+        </div>
+      
+        <canvas id="canvas" style="display: none;"></canvas>
+        <p id="respuestaTexto"></p>
+      </div>
 
     <script src="/socket.io/socket.io.js"></script>
     <script>
