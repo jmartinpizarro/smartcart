@@ -120,6 +120,7 @@
 
       // Escuchar actualizaciones del carrito
       socket.on("sincronizarCarrito", (data) => {
+        console.log(" Producto añadido al carrito:", data);
         const carritoActual = Array.isArray(data) ? data : data.carrito || [];
         renderCarrito(carritoActual);
       });

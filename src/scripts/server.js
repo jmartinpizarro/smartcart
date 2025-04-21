@@ -115,7 +115,7 @@ io.on("connection", (socket) => {
       if (producto) {
         carrito.push(producto);
         console.log("carritoActual:", carrito);
-        io.emit("sincronizarCarrito", carrito);
+        io.emit("sincronizarCarrito", { carrito });
       }    
     }
     const existeLista = listaCompra.some(
