@@ -13,7 +13,6 @@
             width: 100vw;
             height: 100vh;
             position: relative;
-            overflow: hidden;
         }
         #user-dot {
             width: 15px;
@@ -55,13 +54,21 @@
             z-index: 100;
             display: none;
         }
+        #map-wrapper {
+            width: 100vw;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+        }
     </style>
 </head>
 <body>
-    <div id="supermarket-map">
-        <!-- Aisles will be added here -->
-        <div id="user-dot"></div>
-        <!-- Item points will be added here -->
+    <div id="map-wrapper">
+        <div id="supermarket-map">
+            <div id="user-dot"></div>
+        </div>
     </div>
     <div id="notification"></div>
 
