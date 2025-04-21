@@ -26,17 +26,26 @@
         }
         .pantalla-integrada {
             position: absolute;
-            bottom: 5%; /* Ajusta este valor para mover más arriba/abajo */
+            bottom: 10%; /* Ajustado para estar cerca del borde inferior */
             left: 50%;
             transform: translateX(-50%);
             width: 80%;
-            height: 45%; /* Ajusta la altura de la pantalla */
+            height: 50%; /* Altura suficiente para el contenido */
             background-color: white;
             box-shadow: 0 0 20px rgba(0,0,0,0.4);
             border-radius: 20px;
             padding: 20px;
             font-size: 1rem;
-            overflow: auto;
+            overflow: hidden; /* Elimina el scroll */
+            display: flex;
+            flex-direction: column;
+        }
+        .contenido-pantalla {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            overflow: hidden;
         }
         .notification {
             position: fixed;
@@ -56,16 +65,18 @@
     <div class="carrito-simulacion">
         <img src="../images/carritocompra.jpg" alt="Carrito">
         <div class="pantalla-integrada">
-            <div class="container">
+            <div class="contenido-pantalla">
                 <h1 class="text-center mb-4">SmartCart - Carrito</h1>
                 <p class="text-center mb-4 fs-5">
                     Instrucciones de uso:
+                    <br><br>
+                    1.- Abre la aplicación móvil SmartCart
                     <br>
-                    <br> 1.- Abre la aplicación móvil SmartCart
-                    <br> 2.- Conéctate a la misma red Wi-Fi que el carrito
-                    <br> 3.- ¡Disfruta de la experiencia de compra!
+                    2.- Conéctate a la misma red Wi-Fi que el carrito
                     <br>
-                    <br> Podrás introducir tu lista de la compra y el carrito te guiará por el supermercado.
+                    3.- ¡Disfruta de la experiencia de compra!
+                    <br><br>
+                    Podrás introducir tu lista de la compra y el carrito te guiará por el supermercado.
                 </p>
                 <div class="notification" id="notification"></div>
             </div>
@@ -94,7 +105,6 @@
                             return;
                         }
         
-                        // En caso de redirección general
                         if (data.pagina) {
                             const nuevaPagina = data.pagina + "carrito.html";
                             if (window.location.pathname.split('/').pop() !== nuevaPagina) {
