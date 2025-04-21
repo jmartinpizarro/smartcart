@@ -115,7 +115,7 @@ io.on("connection", (socket) => {
     console.log("📷 Producto añadido al carrito:", nombreProductoLimpio);
     const existeCarrito = carrito.some((p) => p.nombre === nombreProductoLimpio);
     if (!existeCarrito) {
-      const producto = productosDisponibles.find(p => p.nombre === nombreProductoLimpio);  
+      const producto = productosDisponibles.find(p => p.nombre.toLowerCase().trim() === nombreProductoLimpio);  
       if (producto) {
         carrito.push(producto);
         console.log("carritoActual:", carrito);
