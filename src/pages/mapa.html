@@ -400,7 +400,7 @@
                 // Check map boundaries
                 if (newX < 10 || newX > mapWidth - 10 ||
                     newY < 10 || newY > mapHeight - 10) {
-                    console.warn("🚧 Movimiento bloqueado por límite del mapa.");
+                    console.warn("Movimiento bloqueado por límite del mapa.");
                     return false;
                 }
 
@@ -411,7 +411,7 @@
                     updateUserPosition();
                     return true;
                 } else {
-                    console.warn("❌ Movimiento bloqueado por obstáculo.");
+                    console.warn("Movimiento bloqueado por obstáculo.");
                     return false;
                 }
             }
@@ -595,6 +595,7 @@
                 createItemPoints();
                 addToggleItemsButton();
                 updateUserPosition();
+                calibrateAccelerometer();
 
                 // Setup button event listeners
                 calibrateButton.addEventListener('click', () => {
@@ -622,7 +623,7 @@
                 // Request permissions and setup sensors
                 requestSensorPermissions();
 
-                // Add keyboard controls for testing (mainly for desktop)
+                // For testing
                 document.addEventListener('keydown', (e) => {
                     switch (e.key) {
                         case 'ArrowLeft':
