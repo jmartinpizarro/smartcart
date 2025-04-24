@@ -459,19 +459,24 @@
 
             // Calcular si mas o menos se realiza en torno a un centro aproximado
             const centro = points.reduce((acc, p) => {
+                // Sumo todas las coordenadas x e y
                 acc.x += p.x;
                 acc.y += p.y;
                 return acc;
             }, {x:0, y:0});
+            // Obtengo las coordenadas del centro dividiendo entre el número total de puntos para obtener un promedio
             centro.x /= points.length;
             centro.y /= points.length;
 
-            // Calcular desviación estándar del radio
+            // Para cada punto se calcula su distancia al centro aproximado
             const radios =  points.map(p => Math.hypot(p.x - centro.x, p.y - centro.y));
+            // Radio medio de todos los puntos
             const radioPromedio = radios.reduce((a, b) => a + b, 0)/radios.length;
+            // Calcular desviación estándar de los radios
             const desviacion = Math.sqrt(
                 radios.map(r => Math.pow(r - radioPromedio, 2)).reduce((a, b) => a + b)/radios.length
             );
+            // Los puntos no están equidistantes del centro
             if (desviacion > 20) {
                 return false;
             }
