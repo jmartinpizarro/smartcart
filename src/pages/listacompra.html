@@ -457,6 +457,25 @@
 
             if (recorrido < 200) return false;
 
+            // Calcular si mas o menos se realiza en torno a un centro aproximado
+            const centro = points.reduce((acc, p) => {
+                acc.x += p.x;
+                acc.y += p.y;
+                return acc;
+            }, {x:0, y:0});
+            centro.x /= points.length;
+            centro.y /= points.length;
+
+            // Calcular desviación estándar del radio
+            const radios =  points.map(p => Math.hypot(p.x - centro.x, p.y - centro.y));
+            const radioPromedio = radios.reduce((a, b) => a + b, 0)/radios.length;
+            const desviacion = Math.sqrt(
+                radios.map(r => Math.pow(r - radioPromedio, 2)).reduce((a, b) => a + b)/radios.length
+            );
+            if (desviacion > 20) {
+                return false;
+            }
+
             return true;
         }
 
