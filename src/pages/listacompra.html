@@ -202,7 +202,10 @@
                 li.querySelector("span").textContent
             );
             
-            // Enviar como array simple de strings
+            // Guardar en localStorage
+            localStorage.setItem('listaCompra', JSON.stringify(articulos));
+            
+            // Enviar al servidor
             socket.emit("móvil:actualizarListaCompra", articulos);
         }
 
@@ -278,6 +281,8 @@
                 socket.emit("móvil:actualizarListaCompra", articulos);
                 console.log("🧼 Lista de la compra borrada");
             }
+
+            localStorage.setItem('listaCompra', JSON.stringify(articulos));
         }
 
         // Función para ordenar la lista alfabéticamente
@@ -481,7 +486,24 @@
 
         // Cargar la lista al iniciar la página
         document.addEventListener("DOMContentLoaded", () => {
-            // Solicitar lista actual al conectarse
+            // Cargar de localStorage si existe
+            const listaGuardada = localStorage.getItem('listaCompra');
+            if (listaGuardada) {
+                const articulos = JSON.parse(listaGuardada);
+                const lista = document.getElementById("listaArticulos");
+                lista.innerHTML = "";
+                
+                articulos.forEach(articulo => {
+                    const li = document.createElement("li");
+                    li.innerHTML = `
+                        <span>${articulo}</span>
+                        <button onclick="borrarArticulo(this)">Borrar</button>
+                    `;
+                    lista.appendChild(li);
+                });
+            }
+
+            // Solicitar lista actual al servidor
             if (esCarrito) {
                 socket.emit("carrito:mensaje", {
                     tipo: "lista-compra",
@@ -493,8 +515,6 @@
                     mensaje: "Solicitando lista actual"
                 });
             }
-            
-            //cargarLista();
         });
     </script>
 </body>
