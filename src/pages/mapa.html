@@ -108,8 +108,8 @@
 
 <body>
     <h1>Smart Shopping Cart Map</h1>
+    <div class="notification" id="notification" style="display: none;"></div>
     <div id="supermarket-map">
-        <!-- Aisles will be added here -->
         <div id="user-dot"></div>
     </div>
 
@@ -200,9 +200,9 @@
             function createItemPoints() {
                 // Leer la lista de la compra desde localStorage
                 const listaCompra = JSON.parse(localStorage.getItem('listaCompra')) || [];
-
+                
                 // Leer las posiciones de los items (si existen)
-                const itemPositions = JSON.parse(localStorage.getItem('itemPositions')) || {};
+                let itemPositions = JSON.parse(localStorage.getItem('itemPositions')) || {};
 
                 // Eliminar puntos anteriores
                 const existingPoints = document.querySelectorAll('.item-point');
@@ -216,8 +216,8 @@
                         const aisle = obstacles[aisleIndex];
 
                         // Generar posición aleatoria dentro de la estantería
-                        const x = Math.random() * (aisle.x2 - aisle.x1 - 10) + aisle.x1 + 5;
-                        const y = Math.random() * (aisle.y2 - aisle.y1 - 10) + aisle.y1 + 5;
+                        const x = Math.random() * (aisle.x2 - aisle.x1 - 20) + aisle.x1 + 10;
+                        const y = Math.random() * (aisle.y2 - aisle.y1 - 20) + aisle.y1 + 10;
 
                         // Guardar la posición
                         itemPositions[item] = { x, y };
@@ -246,19 +246,12 @@
                     point.style.left = `${position.x}px`;
                     point.style.top = `${position.y}px`;
                     point.style.zIndex = '10';
-
-                    // Añadir tooltip con el nombre del producto
                     point.title = item;
-
-                    // Añadir el punto al mapa
                     supermarketMap.appendChild(point);
                 });
 
-                const currentItems = JSON.parse(localStorage.getItem('itemPositions')) || {};
-                if (JSON.stringify(lastSentItems) !== JSON.stringify(currentItems)) {
-                    socket.emit('mapa:actualizarItems', currentItems);
-                    lastSentItems = {...currentItems};
-                }
+                // Emitir la actualización de items al servidor
+                socket.emit('mapa:actualizarItems', itemPositions);
             }
             function addToggleItemsButton() {
                 const toggleButton = document.createElement('button');
@@ -317,7 +310,6 @@
                 let closestDistance = Infinity;
                 let closestItem = null;
 
-                // Restablecer todos los puntos a azul
                 const itemPoints = document.querySelectorAll('.item-point');
                 itemPoints.forEach(point => {
                     point.style.backgroundColor = 'blue';
@@ -325,7 +317,6 @@
                     point.style.height = '8px';
                 });
 
-                // Encontrar el item más cercano
                 Object.entries(itemPositions).forEach(([item, position]) => {
                     const distance = getDistanceToItem(position);
                     if (distance < closestDistance) {
@@ -334,16 +325,13 @@
                     }
                 });
 
-                // Destacar el item más cercano si está a menos de 50 pixeles
                 if (closestItem && closestDistance < 50) {
-                    const itemPoints = document.querySelectorAll('.item-point');
                     itemPoints.forEach(point => {
                         if (point.title === closestItem) {
                             point.style.backgroundColor = 'green';
                             point.style.width = '12px';
                             point.style.height = '12px';
 
-                            // Mostrar notificación
                             const notification = document.getElementById('notification');
                             notification.textContent = `¡Producto cercano: ${closestItem}!`;
                             notification.style.display = 'block';
@@ -354,7 +342,6 @@
                     });
                 }
             }
-
             // Update user position on the map
             function updateUserPosition() {
                 userDot.style.transform = `translate(${userPosition.x - 7.5}px, ${userPosition.y - 7.5}px)`;
@@ -651,6 +638,21 @@
                             stepCountDisplay.textContent = stepCount;
                             moveUser(currentDirection);
                             break;
+                    }
+                });
+                
+                socket.emit('mapa:solicitarEstado');
+                if (!localStorage.getItem('listaCompra')) {
+                    localStorage.setItem('listaCompra', JSON.stringify([]));
+                }
+                socket.on('mapa:actualizacion', (data) => {
+                    if (data.position) {
+                        userPosition = data.position;
+                        updateUserPosition();
+                    }
+                    if (data.items) {
+                        localStorage.setItem('itemPositions', JSON.stringify(data.items));
+                        createItemPoints();
                     }
                 });
 
