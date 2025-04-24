@@ -62,16 +62,56 @@
             align-items: center;
             overflow: hidden;
         }
+        .carrito-simulacion {
+            position: relative;
+            width: 100%;
+            height: 100vh;
+            overflow: hidden;
+        }
+        .carrito-simulacion img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        .pantalla-integrada {
+            position: absolute;
+            bottom: 10%; /* Ajustado para estar cerca del borde inferior */
+            left: 50%;
+            transform: translateX(-50%);
+            width: 70%;
+            height: 60%; /* Altura suficiente para el contenido */
+            background-color: white;
+            box-shadow: 0 0 20px rgba(0,0,0,0.4);
+            border-radius: 20px;
+            padding: 20px;
+            font-size: 1rem;
+            overflow: hidden; /* Elimina el scroll */
+            display: flex;
+            flex-direction: column;
+        }
+        .contenido-pantalla {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            overflow: hidden;
+        }
     </style>
 </head>
 <body>
-    <div id="map-wrapper">
-        <div id="supermarket-map">
-            <div id="user-dot"></div>
+    <div class="carrito-simulacion">
+        <img src="https://s1.elespanol.com/2023/07/07/actualidad/777182628_234544367_1706x1280.jpg" alt="Carrito">
+        <div class="pantalla-integrada">
+            <div class="contenido-pantalla">
+                <div id="map-wrapper">
+                    <div id="supermarket-map">
+                        <div id="user-dot"></div>
+                    </div>
+                </div>
+                <div id="notification"></div>
+            </div>
         </div>
     </div>
-    <div id="notification"></div>
-
     <script src="/socket.io/socket.io.js"></script>
     <script>
         document.addEventListener("DOMContentLoaded", () => {

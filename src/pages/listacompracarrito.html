@@ -36,24 +36,63 @@
       padding: 5px 0;
       border-bottom: 1px solid #dee2e6;
     }
+    .carrito-simulacion {
+            position: relative;
+            width: 100%;
+            height: 100vh;
+            overflow: hidden;
+        }
+        .carrito-simulacion img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        .pantalla-integrada {
+            position: absolute;
+            bottom: 10%; /* Ajustado para estar cerca del borde inferior */
+            left: 50%;
+            transform: translateX(-50%);
+            width: 70%;
+            height: 60%; /* Altura suficiente para el contenido */
+            background-color: white;
+            box-shadow: 0 0 20px rgba(0,0,0,0.4);
+            border-radius: 20px;
+            padding: 20px;
+            font-size: 1rem;
+            overflow: hidden; /* Elimina el scroll */
+            display: flex;
+            flex-direction: column;
+        }
+        .contenido-pantalla {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            overflow: hidden;
+        }
   </style>
 </head>
 <body>
-  <div class="container">
-    <h1 class="text-center mb-4">🛒 Carrito de la Compra</h1>
-    
-    <div class="lista-compra">
-      <h4>📝 Lista de Compra</h4>
-      <div id="listaCompraContainer">
-        <!-- Items de la lista aparecerán aquí -->
+  <div class="carrito-simulacion">
+    <img src="https://s1.elespanol.com/2023/07/07/actualidad/777182628_234544367_1706x1280.jpg" alt="Carrito">
+    <div class="pantalla-integrada">
+        <div class="contenido-pantalla">
+          <h1 class="text-center mb-4">🛒 Carrito de la Compra</h1>
+            
+            <div class="lista-compra">
+              <h4>📝 Lista de Compra</h4>
+              <div id="listaCompraContainer">
+                <!-- Items de la lista aparecerán aquí -->
+              </div>
+            </div>
+            
+            <h4 class="mt-4">🛍 Productos en Carrito</h4>
+            <div id="listaCarrito">
+              <!-- Productos aparecerán aquí -->
+            </div>
+            <div class="total" id="totalCompra">Total: 0.00 €</div>
+        </div>
       </div>
-    </div>
-    
-    <h4 class="mt-4">🛍 Productos en Carrito</h4>
-    <div id="listaCarrito">
-      <!-- Productos aparecerán aquí -->
-    </div>
-    <div class="total" id="totalCompra">Total: 0.00 €</div>
   </div>
 
   <script src="/socket.io/socket.io.js"></script>
