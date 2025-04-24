@@ -279,10 +279,10 @@
                 lista.innerHTML = '';
                 const articulos = [];
                 socket.emit("móvil:actualizarListaCompra", articulos);
-                console.log("🧼 Lista de la compra borrada");
+                localStorage.setItem('listaCompra', JSON.stringify(articulos));
+                console.log("Lista de la compra borrada");
             }
 
-            localStorage.setItem('listaCompra', JSON.stringify(articulos));
         }
 
         // Función para ordenar la lista alfabéticamente

@@ -177,10 +177,10 @@
       });
 
       // Solicitar datos al conectar
-      /*socket.on("connect", () => {
+      socket.on("connect", () => {
         socket.emit("solicitarDatosCarrito");
         socket.emit("solicitarDatosListaCompra");
-      });*/
+      });
 
       // Manejar errores de conexión
       socket.on("connect_error", (err) => {
